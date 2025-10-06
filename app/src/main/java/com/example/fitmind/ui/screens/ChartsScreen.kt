@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.fitmind.R
+import com.example.fitmind.ui.components.BottomNavigationBar
 import com.example.fitmind.ui.components.MonthlyLineChart
 import com.example.fitmind.ui.components.WeeklyBarChart
 import com.example.fitmind.viewmodel.AuthViewModel
@@ -71,6 +72,9 @@ fun ChartsScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            BottomNavigationBar(navController)
         }
     ) { innerPadding ->
         Box(

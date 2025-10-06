@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.fitmind.ui.components.BottomNavigationBar
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.NotificationViewModel
 
@@ -66,6 +67,9 @@ fun SettingsScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             )
+        },
+        bottomBar = {
+            BottomNavigationBar(navController)
         }
     ) { innerPadding ->
         Column(
