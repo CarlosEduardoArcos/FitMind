@@ -28,10 +28,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.fitmind.core.AppConfig
 import com.example.fitmind.data.model.Habito
 import com.example.fitmind.ui.components.BottomNavigationBar
 import com.example.fitmind.viewmodel.AuthViewModel
@@ -119,6 +121,16 @@ fun HomeScreen(
                         HabitCard(habit = habit)
                     }
                 }
+            }
+            
+            // Indicador de modo mock
+            if (AppConfig.isMockMode) {
+                Text(
+                    text = "🔧 Modo local activo (sin Firebase)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(8.dp)
+                )
             }
         }
     }

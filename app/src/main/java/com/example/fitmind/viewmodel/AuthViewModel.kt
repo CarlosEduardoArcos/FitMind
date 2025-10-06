@@ -2,6 +2,8 @@ package com.example.fitmind.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.fitmind.core.AppConfig
+import com.example.fitmind.data.mock.MockAuthRepository
 import com.example.fitmind.data.repository.FirebaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,15 +11,17 @@ import kotlinx.coroutines.launch
 
 /**
  * ViewModel responsible for user authentication state and actions.
+ * Supports both Firebase and Mock modes.
  */
 class AuthViewModel(
-    private val repository: FirebaseRepository = FirebaseRepository()
+    private val firebaseRepository: FirebaseRepository = FirebaseRepository(),
+    private val mockRepository: MockAuthRepository = MockAuthRepository()
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _isAuthenticated = MutableStateFlow(false) // Mock: starts as false
+    private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
 
     private val _errorMessage = MutableStateFlow<String?>(null)
@@ -26,16 +30,23 @@ class AuthViewModel(
     fun register(email: String, password: String, nombre: String) {
         _isLoading.value = true
         viewModelScope.launch {
-            // Mock: simulate network delay
-            kotlinx.coroutines.delay(1000)
-            _isLoading.value = false
-            
-            // Mock: simple validation
-            if (email.isNotBlank() && password.length >= 6 && nombre.isNotBlank()) {
-                _isAuthenticated.value = true
-                _errorMessage.value = null
-            } else {
-                _errorMessage.value = "Por favor completa todos los campos correctamente"
+            try {
+                val result = if (AppConfig.isMockMode) {
+                    mockRepository.registerUser(email, password, nombre)
+                } else {
+                    firebaseRepository.registerUser(email, password, nombre)
+                }
+                
+                if (result.isSuccess) {
+                    _isAuthenticated.value = true
+                    _errorMessage.value = null
+                } else {
+                    _errorMessage.value = result.exceptionOrNull()?.message ?: "Error en el registro"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Error desconocido"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -43,28 +54,50 @@ class AuthViewModel(
     fun login(email: String, password: String) {
         _isLoading.value = true
         viewModelScope.launch {
-            // Mock: simulate network delay
-            kotlinx.coroutines.delay(1000)
-            _isLoading.value = false
-            
-            // Mock: simple validation
-            if (email.isNotBlank() && password.isNotBlank()) {
-                _isAuthenticated.value = true
-                _errorMessage.value = null
-            } else {
-                _errorMessage.value = "Email y contraseña son requeridos"
+            try {
+                val result = if (AppConfig.isMockMode) {
+                    mockRepository.loginUser(email, password)
+                } else {
+                    firebaseRepository.loginUser(email, password)
+                }
+                
+                if (result.isSuccess) {
+                    _isAuthenticated.value = true
+                    _errorMessage.value = null
+                } else {
+                    _errorMessage.value = result.exceptionOrNull()?.message ?: "Error en el login"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Error desconocido"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun logout() {
+        if (AppConfig.isMockMode) {
+            mockRepository.logoutUser()
+        } else {
+            firebaseRepository.logoutUser()
+        }
         _isAuthenticated.value = false
     }
 
-    fun getCurrentUserId(): String? = if (_isAuthenticated.value) "mock_user_id" else null
+    fun getCurrentUserId(): String? = if (_isAuthenticated.value) {
+        if (AppConfig.isMockMode) {
+            mockRepository.getCurrentUserId()
+        } else {
+            firebaseRepository.getCurrentUserId()
+        }
+    } else null
 
     fun checkUserSession() {
-        val currentUser = repository.getCurrentUserId()
+        val currentUser = if (AppConfig.isMockMode) {
+            mockRepository.getCurrentUserId()
+        } else {
+            firebaseRepository.getCurrentUserId()
+        }
         _isAuthenticated.value = currentUser != null
     }
 }

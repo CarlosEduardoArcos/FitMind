@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,8 @@ fun SplashScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     var startAnimation by remember { mutableStateOf(false) }
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
+    
     val alphaAnim by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0f,
         animationSpec = tween(1000),
@@ -56,14 +59,19 @@ fun SplashScreen(
         startAnimation = true
         authViewModel.checkUserSession()
         kotlinx.coroutines.delay(3000) // Show splash for 3 seconds
-        
-        if (authViewModel.isAuthenticated.value) {
-            navController.navigate("home") {
-                popUpTo("splash") { inclusive = true }
-            }
-        } else {
-            navController.navigate("login") {
-                popUpTo("splash") { inclusive = true }
+    }
+    
+    // Navigate based on authentication state
+    LaunchedEffect(isAuthenticated) {
+        if (startAnimation) { // Only navigate after animation has started
+            if (isAuthenticated) {
+                navController.navigate("home") {
+                    popUpTo("splash") { inclusive = true }
+                }
+            } else {
+                navController.navigate("login") {
+                    popUpTo("splash") { inclusive = true }
+                }
             }
         }
     }

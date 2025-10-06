@@ -1,0 +1,12 @@
+package com.example.fitmind
+
+import android.app.Application
+import com.google.firebase.FirebaseApp
+
+class FitMindApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        // Initialize Firebase
+        FirebaseApp.initializeApp(this)
+    }
+}

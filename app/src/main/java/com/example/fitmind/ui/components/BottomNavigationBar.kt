@@ -1,14 +1,15 @@
 package com.example.fitmind.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -18,8 +19,8 @@ sealed class BottomNavItem(
     val title: String,
     val icon: ImageVector
 ) {
-    object Home : BottomNavItem("home", "Inicio", Icons.Filled.Checklist)
-    object Charts : BottomNavItem("charts", "Gráficos", Icons.Filled.ShowChart)
+    object Home : BottomNavItem("home", "Inicio", Icons.Filled.Home)
+    object Charts : BottomNavItem("charts", "Gráficos", Icons.Filled.Info)
     object Settings : BottomNavItem("settings", "Configuración", Icons.Filled.Settings)
 }
 
