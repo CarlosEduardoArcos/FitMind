@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -62,17 +64,24 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(gradient)
+            .padding(16.dp)
     ) {
-        if (habits.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = "Mis Hábitos",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+            )
+
+            if (habits.isEmpty()) {
+                Spacer(modifier = Modifier.height(80.dp))
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                    elevation = CardDefaults.cardElevation(6.dp),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.padding(24.dp)
                 ) {
@@ -86,18 +95,18 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                items(habits) { habit ->
-                    HabitCard(
-                        habit = habit,
-                        onDelete = { habitViewModel.deleteHabitLocal(habit) }
-                    )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 60.dp)
+                ) {
+                    items(habits) { habit ->
+                        HabitCard(
+                            habit = habit,
+                            onDelete = { habitViewModel.deleteHabitLocal(habit) }
+                        )
+                    }
                 }
             }
         }

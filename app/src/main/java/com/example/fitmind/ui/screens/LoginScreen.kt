@@ -5,6 +5,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,13 +26,16 @@ import androidx.navigation.NavController
 import com.example.fitmind.R
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController, darkTheme: Boolean, onToggleTheme: () -> Unit) {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     val gradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFF3A86FF), Color(0xFF06D6A0)),
+        colors = if (darkTheme)
+            listOf(Color.Black, Color(0xFF1B1B1B))
+        else
+            listOf(Color(0xFF3A86FF), Color(0xFF06D6A0)),
         startY = 0f,
         endY = Float.POSITIVE_INFINITY
     )
@@ -38,15 +44,25 @@ fun LoginScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(gradient)
-            .padding(horizontal = 24.dp),
-        contentAlignment = Alignment.Center
+            .padding(24.dp)
     ) {
+        // Botón modo oscuro/claro
+        IconButton(
+            onClick = onToggleTheme,
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+            Icon(
+                imageVector = if (darkTheme) Icons.Default.Settings else Icons.Default.Info,
+                contentDescription = "Cambiar tema",
+                tint = Color.White
+            )
+        }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier.fillMaxWidth()
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
         ) {
-
             // Logo o ícono superior
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
@@ -60,17 +76,11 @@ fun LoginScreen(navController: NavController) {
             Text(
                 text = "Bienvenido a FitMind 🧠",
                 color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                textAlign = TextAlign.Center
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
             )
 
-            Text(
-                text = "Entrena tu mente, fortalece tus hábitos",
-                color = Color.White.copy(alpha = 0.9f),
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center
-            )
+            Spacer(Modifier.height(24.dp))
 
             OutlinedTextField(
                 value = email,
@@ -79,9 +89,8 @@ fun LoginScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    focusedLabelColor = Color.White,
-                    cursorColor = Color.White
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
+                    focusedLabelColor = Color.White
                 )
             )
 
@@ -93,11 +102,12 @@ fun LoginScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.6f),
-                    focusedLabelColor = Color.White,
-                    cursorColor = Color.White
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
+                    focusedLabelColor = Color.White
                 )
             )
+
+            Spacer(Modifier.height(16.dp))
 
             Button(
                 onClick = {
@@ -110,26 +120,21 @@ fun LoginScreen(navController: NavController) {
                         Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = Color(0xFF3A86FF)
-                ),
-                shape = RoundedCornerShape(12.dp)
+                )
             ) {
                 Text("Iniciar sesión", fontWeight = FontWeight.Bold)
             }
 
-            TextButton(
-                onClick = {
-                    Toast.makeText(context, "Entrando en modo invitado", Toast.LENGTH_SHORT).show()
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
-                    }
+            TextButton(onClick = {
+                Toast.makeText(context, "Entrando en modo invitado", Toast.LENGTH_SHORT).show()
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
                 }
-            ) {
+            }) {
                 Text("Entrar como invitado", color = Color.White)
             }
         }
