@@ -14,12 +14,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.fitmind.viewmodel.AuthViewModel
 
 @Composable
-fun LoginScreen(navController: NavController, darkTheme: Boolean, onToggleTheme: () -> Unit) {
+fun LoginScreen(
+    navController: NavController, 
+    darkTheme: Boolean, 
+    onToggleTheme: () -> Unit,
+    authViewModel: AuthViewModel
+) {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    
+    val isLoading by authViewModel.isLoading.collectAsState()
+    val currentUser by authViewModel.currentUser.collectAsState()
+    val userRole by authViewModel.userRole.collectAsState()
 
     val gradient = Brush.verticalGradient(
         colors = if (darkTheme)
@@ -29,6 +39,26 @@ fun LoginScreen(navController: NavController, darkTheme: Boolean, onToggleTheme:
         startY = 0f,
         endY = Float.POSITIVE_INFINITY
     )
+
+    // Navegar según el rol del usuario
+    LaunchedEffect(currentUser, userRole) {
+        if (currentUser != null && userRole != null) {
+            when (userRole) {
+                "admin" -> {
+                    Toast.makeText(context, "Bienvenido Admin! 👑", Toast.LENGTH_SHORT).show()
+                    navController.navigate("admin") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+                "usuario" -> {
+                    Toast.makeText(context, "Bienvenido a FitMind! 🧠", Toast.LENGTH_SHORT).show()
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -77,6 +107,7 @@ fun LoginScreen(navController: NavController, darkTheme: Boolean, onToggleTheme:
                 onValueChange = { email = it },
                 label = { Text("Correo electrónico") },
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
                     unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
@@ -90,6 +121,7 @@ fun LoginScreen(navController: NavController, darkTheme: Boolean, onToggleTheme:
                 label = { Text("Contraseña") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.White,
                     unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
@@ -102,20 +134,31 @@ fun LoginScreen(navController: NavController, darkTheme: Boolean, onToggleTheme:
             Button(
                 onClick = {
                     if (email.isNotBlank() && password.isNotBlank()) {
-                        Toast.makeText(context, "Inicio de sesión local exitoso ✅", Toast.LENGTH_SHORT).show()
-                        navController.navigate("home") {
-                            popUpTo("login") { inclusive = true }
+                        authViewModel.login(email, password) { success, message ->
+                            if (success) {
+                                Toast.makeText(context, "Iniciando sesión...", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Error: ${message ?: "Credenciales incorrectas"}", Toast.LENGTH_LONG).show()
+                            }
                         }
                     } else {
                         Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = Color(0xFF3A86FF)
                 )
             ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color(0xFF3A86FF)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
                 Text("Iniciar sesión", fontWeight = FontWeight.Bold)
             }
 
@@ -126,6 +169,14 @@ fun LoginScreen(navController: NavController, darkTheme: Boolean, onToggleTheme:
                 }
             }) {
                 Text("Entrar como invitado", color = Color.White)
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            TextButton(onClick = {
+                navController.navigate("register")
+            }) {
+                Text("¿No tienes cuenta? Regístrate aquí", color = Color.White.copy(alpha = 0.8f))
             }
         }
     }

@@ -1,142 +1,202 @@
 package com.example.fitmind.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.fitmind.viewmodel.AuthViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     navController: NavController,
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel
 ) {
+    val context = LocalContext.current
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    
     val isLoading by authViewModel.isLoading.collectAsState()
-    val errorMessage by authViewModel.errorMessage.collectAsState()
-    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val currentUser by authViewModel.currentUser.collectAsState()
+    val userRole by authViewModel.userRole.collectAsState()
 
-    LaunchedEffect(isAuthenticated) {
-        if (isAuthenticated) {
-            navController.navigate("home") {
-                popUpTo("register") { inclusive = true }
+    val gradient = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3A86FF), Color(0xFF06D6A0)),
+        startY = 0f,
+        endY = Float.POSITIVE_INFINITY
+    )
+
+    // Navegar según el rol del usuario
+    LaunchedEffect(currentUser, userRole) {
+        if (currentUser != null && userRole != null) {
+            when (userRole) {
+                "admin" -> {
+                    Toast.makeText(context, "Cuenta admin creada! 👑", Toast.LENGTH_SHORT).show()
+                    navController.navigate("admin") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                }
+                "usuario" -> {
+                    Toast.makeText(context, "Cuenta creada exitosamente! 🎉", Toast.LENGTH_SHORT).show()
+                    navController.navigate("home") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                }
             }
         }
     }
 
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(text = "FitMind", color = MaterialTheme.colorScheme.onPrimary) })
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(gradient)
+            .padding(24.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
         ) {
-            Column(
+            Text(
+                text = "Crear cuenta en FitMind 🧠",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Spacer(Modifier.height(8.dp))
+            
+            Text(
+                text = "Únete a la comunidad fitness",
+                color = Color.White.copy(alpha = 0.8f),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            
+            Spacer(Modifier.height(32.dp))
+
+            OutlinedTextField(
+                value = nombre,
+                onValueChange = { nombre = it },
+                label = { Text("Nombre completo") },
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "Crear Cuenta",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground
+                enabled = !isLoading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
+                    focusedLabelColor = Color.White
                 )
+            )
 
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre completo") },
-                    modifier = Modifier.fillMaxWidth()
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Correo electrónico") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
+                    focusedLabelColor = Color.White
                 )
+            )
 
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Correo electrónico") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth()
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Contraseña") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
+                    focusedLabelColor = Color.White
                 )
+            )
 
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Contraseña") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth()
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirmar contraseña") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.White,
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
+                    focusedLabelColor = Color.White
                 )
+            )
 
-                Button(
-                    onClick = { authViewModel.register(email, password, nombre) },
-                    enabled = !isLoading && nombre.isNotBlank() && email.isNotBlank() && password.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(8.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
+            Spacer(Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    if (nombre.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                    } else if (password != confirmPassword) {
+                        Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                    } else if (password.length < 6) {
+                        Toast.makeText(context, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
                     } else {
-                        Text("Crear Cuenta")
+                        authViewModel.register(nombre, email, password) { success, message ->
+                            if (!success) {
+                                Toast.makeText(context, "Error: ${message ?: "No se pudo crear la cuenta"}", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = Color(0xFF3A86FF)
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color(0xFF3A86FF)
+                    )
+                    Spacer(Modifier.width(8.dp))
                 }
+                Text("Crear cuenta", fontWeight = FontWeight.Bold)
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
-                TextButton(
-                    onClick = { navController.navigate("login") }
-                ) {
-                    Text("¿Ya tienes cuenta? Inicia sesión")
-                }
+            TextButton(onClick = {
+                navController.popBackStack()
+            }) {
+                Text("¿Ya tienes cuenta? Inicia sesión aquí", color = Color.White.copy(alpha = 0.8f))
+            }
+
+            if (email == "carloeduardo1987@gmail.com") {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "🔑 Este correo será registrado como ADMIN",
+                    color = Color(0xFF00C853),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
 }
-
-

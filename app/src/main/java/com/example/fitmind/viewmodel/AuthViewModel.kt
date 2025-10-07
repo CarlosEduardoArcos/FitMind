@@ -2,115 +2,79 @@ package com.example.fitmind.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fitmind.core.AppConfig
-import com.example.fitmind.data.mock.MockAuthRepository
-import com.example.fitmind.data.repository.FirebaseRepository
+import com.example.fitmind.data.FirebaseRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel responsible for user authentication state and actions.
- * Supports both Firebase and Mock modes.
- */
-class AuthViewModel(
-    private val firebaseRepository: FirebaseRepository = FirebaseRepository(),
-    private val mockRepository: MockAuthRepository = MockAuthRepository()
-) : ViewModel() {
+class AuthViewModel : ViewModel() {
+    private val repo = FirebaseRepository()
+    private val auth = FirebaseAuth.getInstance()
+
+    private val _currentUser = MutableStateFlow(auth.currentUser)
+    val currentUser: StateFlow<com.google.firebase.auth.FirebaseUser?> = _currentUser.asStateFlow()
+
+    private val _userRole = MutableStateFlow<String?>(null)
+    val userRole: StateFlow<String?> = _userRole.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _isAuthenticated = MutableStateFlow(false)
-    val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
-
-    fun register(email: String, password: String, nombre: String) {
-        _isLoading.value = true
-        viewModelScope.launch {
-            try {
-                val result = if (AppConfig.isMockMode) {
-                    mockRepository.registerUser(email, password, nombre)
-                } else {
-                    firebaseRepository.registerUser(email, password, nombre)
-                }
-                
-                if (result.isSuccess) {
-                    _isAuthenticated.value = true
-                    _errorMessage.value = null
-                } else {
-                    _errorMessage.value = result.exceptionOrNull()?.message ?: "Error en el registro"
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Error desconocido"
-            } finally {
-                _isLoading.value = false
+    init {
+        // Escuchar cambios en el estado de autenticación
+        auth.addAuthStateListener { firebaseAuth ->
+            _currentUser.value = firebaseAuth.currentUser
+            if (firebaseAuth.currentUser != null) {
+                loadUserRole(firebaseAuth.currentUser!!.uid)
+            } else {
+                _userRole.value = null
             }
         }
     }
 
-    fun login(email: String, password: String) {
+    fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         _isLoading.value = true
-        _errorMessage.value = null
-        viewModelScope.launch {
-            try {
-                if (AppConfig.isMockMode) {
-                    // Simular delay para mejor UX en modo mock
-                    kotlinx.coroutines.delay(1000)
-                    // En modo mock, siempre simular login exitoso
-                    _isAuthenticated.value = true
-                    _errorMessage.value = null
-                } else {
-                    val result = firebaseRepository.loginUser(email, password)
-                    if (result.isSuccess) {
-                        _isAuthenticated.value = true
-                        _errorMessage.value = null
-                    } else {
-                        _errorMessage.value = result.exceptionOrNull()?.message ?: "Error en el login"
-                    }
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Error desconocido"
-            } finally {
-                _isLoading.value = false
+        repo.loginUser(email, password) { success, msg ->
+            _isLoading.value = false
+            if (success && auth.currentUser != null) {
+                loadUserRole(auth.currentUser!!.uid)
             }
+            onResult(success, msg)
+        }
+    }
+
+    fun register(nombre: String, email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        _isLoading.value = true
+        repo.registerUser(nombre, email, password) { success, msg ->
+            _isLoading.value = false
+            if (success && auth.currentUser != null) {
+                loadUserRole(auth.currentUser!!.uid)
+            }
+            onResult(success, msg)
         }
     }
 
     fun logout() {
-        if (AppConfig.isMockMode) {
-            mockRepository.logoutUser()
-        } else {
-            firebaseRepository.logoutUser()
-        }
-        _isAuthenticated.value = false
+        auth.signOut()
+        _currentUser.value = null
+        _userRole.value = null
     }
 
-    fun getCurrentUserId(): String? = if (_isAuthenticated.value) {
-        if (AppConfig.isGuestMode) {
-            AppConfig.Mock.defaultUserId
-        } else if (AppConfig.isMockMode) {
-            mockRepository.getCurrentUserId()
-        } else {
-            firebaseRepository.getCurrentUserId()
+    private fun loadUserRole(uid: String) {
+        viewModelScope.launch {
+            repo.getUserRole(uid) { role ->
+                _userRole.value = role
+            }
         }
-    } else null
+    }
 
-    fun checkUserSession() {
-        if (AppConfig.isGuestMode) {
-            _isAuthenticated.value = true
-            return
-        }
-        
-        val currentUser = if (AppConfig.isMockMode) {
-            mockRepository.getCurrentUserId()
-        } else {
-            firebaseRepository.getCurrentUserId()
-        }
-        _isAuthenticated.value = currentUser != null
+    fun isAdmin(): Boolean {
+        return _userRole.value == "admin"
+    }
+
+    fun isUser(): Boolean {
+        return _userRole.value == "usuario"
     }
 }
-
-

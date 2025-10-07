@@ -14,11 +14,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.fitmind.ui.components.BottomNavigationBar
 import com.example.fitmind.ui.screens.AddHabitScreen
+import com.example.fitmind.ui.screens.AdminDashboardScreen
 import com.example.fitmind.ui.screens.DashboardsScreen
 import com.example.fitmind.ui.screens.HomeScreen
 import com.example.fitmind.ui.screens.LoginScreen
+import com.example.fitmind.ui.screens.RegisterScreen
 import com.example.fitmind.ui.screens.SettingsScreen
 import com.example.fitmind.ui.screens.SplashScreen
+import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.ChartViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
 
@@ -30,8 +33,9 @@ fun AppNavigation(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val authViewModel: AuthViewModel = viewModel()
 
-    val showBottomBar = currentRoute !in listOf("splash", "login")
+    val showBottomBar = currentRoute !in listOf("splash", "login", "register", "admin")
 
     Scaffold(
         bottomBar = {
@@ -46,7 +50,9 @@ fun AppNavigation(
                 startDestination = "splash"
             ) {
                 composable("splash") { SplashScreen(navController) }
-                composable("login") { LoginScreen(navController, darkTheme, onToggleTheme) }
+                composable("login") { LoginScreen(navController, darkTheme, onToggleTheme, authViewModel) }
+                composable("register") { RegisterScreen(navController, authViewModel) }
+                composable("admin") { AdminDashboardScreen(navController) }
                 composable("home") { HomeScreen(navController, viewModel<HabitViewModel>()) }
                 composable("addHabit") { AddHabitScreen(navController, viewModel<HabitViewModel>()) }
                 composable("dashboards") { DashboardsScreen(navController, viewModel<HabitViewModel>()) }
