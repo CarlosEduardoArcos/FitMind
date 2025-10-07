@@ -41,23 +41,23 @@ fun DashboardsScreen(navController: NavController, habitViewModel: HabitViewMode
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Tab Bar superior con estilo oscuro (igual que barra inferior)
+        // Tab Bar superior con colores exactos especificados
         Surface(
-            color = Color(0xFF1A1A1A), // Fondo oscuro sólido
+            color = Color(0xFF2C2C2C), // Fondo gris oscuro exacto
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
         ) {
             TabRow(
                 selectedTabIndex = selectedTabIndex,
-                containerColor = Color(0xFF1A1A1A), // Fondo oscuro explícito
+                containerColor = Color(0xFF2C2C2C), // Fondo gris oscuro explícito
                 contentColor = Color.White,
                 modifier = Modifier.fillMaxWidth(),
                 indicator = { tabPositions ->
                     androidx.compose.material3.TabRowDefaults.SecondaryIndicator(
                         modifier = Modifier,
-                        color = Color(0xFF06D6A0), // Mismo verde que barra inferior
-                        height = 4.dp // Grosor como barra inferior
+                        color = Color(0xFF00C853), // Verde turquesa brillante exacto
+                        height = 4.dp // Grosor 3-4dp
                     )
                 }
             ) {
@@ -69,11 +69,11 @@ fun DashboardsScreen(navController: NavController, habitViewModel: HabitViewMode
                             Text(
                                 text = title,
                                 color = if (selectedTabIndex == index) {
-                                    Color(0xFF06D6A0) // Verde turquesa para activo (mismo que iconos de barra inferior)
+                                    Color(0xFF00C853) // Verde turquesa brillante para activo
                                 } else {
-                                    Color.White.copy(alpha = 0.7f) // Blanco 70% para inactivo (mismo que iconos de barra inferior)
+                                    Color(0xFFFFFFFF) // Blanco puro para inactivo
                                 },
-                                fontSize = 14.sp,
+                                fontSize = 16.sp, // Tamaño exacto especificado
                                 fontWeight = FontWeight.Medium
                             )
                         }
