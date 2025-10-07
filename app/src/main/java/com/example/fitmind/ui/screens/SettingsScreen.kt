@@ -188,6 +188,7 @@ fun SettingsScreen(navController: NavController) {
                     Text("ℹ️ Información de la App", fontWeight = FontWeight.Bold, color = Color(0xFF3A86FF))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Versión: 1.0.0", color = Color.Black)
+                    Text("Desarrollado con Jetpack Compose y Firebase", color = Color.Black)
                 }
             }
         }
