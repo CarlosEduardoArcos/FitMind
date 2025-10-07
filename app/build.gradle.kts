@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.coroutines.play.services)
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation(libs.mp.android.chart)
     implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.junit)

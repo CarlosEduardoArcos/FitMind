@@ -1,5 +1,11 @@
 package com.example.fitmind
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -27,7 +33,12 @@ object Routes {
 
 @Composable
 fun AppNavigation(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = Routes.Splash) {
+    NavHost(
+        navController = navController, 
+        startDestination = Routes.Splash,
+        enterTransition = { fadeIn() + slideInHorizontally() },
+        exitTransition = { fadeOut() + slideOutHorizontally() }
+    ) {
         composable(Routes.Splash) { SplashScreen(navController) }
         composable(Routes.Login) { LoginScreen(navController) }
         composable(Routes.Register) { RegisterScreen(navController) }

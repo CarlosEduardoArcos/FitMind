@@ -1,15 +1,22 @@
 package com.example.fitmind.ui.screens
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
@@ -27,15 +34,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.fitmind.core.AppConfig
+import com.example.fitmind.data.local.DataStoreManager
 import com.example.fitmind.data.model.Habito
 import com.example.fitmind.ui.components.BottomNavigationBar
 import com.example.fitmind.viewmodel.AuthViewModel
@@ -48,14 +58,20 @@ fun HomeScreen(
     authViewModel: AuthViewModel = viewModel(),
     habitViewModel: HabitViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val dataStoreManager = remember { DataStoreManager(context) }
+    val habitViewModelWithDataStore = remember(habitViewModel) {
+        HabitViewModel(dataStoreManager = dataStoreManager)
+    }
+    
     val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
-    val habits by habitViewModel.habits.collectAsState()
-    val isLoading by habitViewModel.isLoading.collectAsState()
+    val habits by habitViewModelWithDataStore.habits.collectAsState()
+    val isLoading by habitViewModelWithDataStore.isLoading.collectAsState()
     val currentUserId = authViewModel.getCurrentUserId()
 
     LaunchedEffect(currentUserId) {
         currentUserId?.let { userId ->
-            habitViewModel.observeHabits(userId)
+            habitViewModelWithDataStore.observeHabits(userId)
         }
     }
 
@@ -123,42 +139,55 @@ fun HomeScreen(
                     }
                 } else if (habits.isEmpty()) {
                     // Mostrar mensaje amigable cuando no hay hábitos
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    AnimatedVisibility(
+                        visible = habits.isEmpty(),
+                        enter = fadeIn() + slideInVertically(),
+                        exit = fadeOut() + slideOutVertically()
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "🧘‍♂️ Aún no tienes hábitos registrados",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = "Presiona el botón ➕ para agregar uno nuevo y comenzar tu viaje hacia una mente más saludable.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                            Button(
-                                onClick = { navController.navigate("addHabit") },
-                                modifier = Modifier.padding(top = 8.dp)
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Text("Agregar mi primer hábito")
+                                Text(
+                                    text = "💡 Aún no tienes hábitos",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = "Agrega uno nuevo tocando el botón ➕",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                                Button(
+                                    onClick = { navController.navigate("addHabit") },
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    Text("Agregar mi primer hábito")
+                                }
                             }
                         }
                     }
                 } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    AnimatedVisibility(
+                        visible = habits.isNotEmpty(),
+                        enter = fadeIn() + slideInVertically(),
+                        exit = fadeOut() + slideOutVertically()
                     ) {
-                        items(habits) { habit ->
-                            HabitCard(habit = habit)
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize().padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(habits) { habit ->
+                                HabitCard(habit = habit)
+                            }
                         }
                     }
                 }
@@ -182,8 +211,14 @@ fun HomeScreen(
 @Composable
 fun HabitCard(habit: Habito) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -194,14 +229,15 @@ fun HabitCard(habit: Habito) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
             Text(
-                text = habit.categoria,
+                text = "Categoría: ${habit.categoria}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = "Frecuencia: ${habit.frecuencia}",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

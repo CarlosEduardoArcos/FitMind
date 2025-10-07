@@ -1,5 +1,10 @@
 package com.example.fitmind.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -210,8 +215,12 @@ fun LoginScreen(
                         }
                     }
 
-                    // Mensaje de error visible
-                    if (!errorMessage.isNullOrEmpty()) {
+                    // Mensaje de error visible con animación
+                    AnimatedVisibility(
+                        visible = !errorMessage.isNullOrEmpty(),
+                        enter = fadeIn() + slideInVertically(),
+                        exit = fadeOut() + slideOutVertically()
+                    ) {
                         Text(
                             text = "⚠️ $errorMessage",
                             color = Color.Red,

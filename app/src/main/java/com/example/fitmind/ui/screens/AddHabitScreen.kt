@@ -1,6 +1,7 @@
 package com.example.fitmind.ui.screens
 
-import android.util.Log
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,11 +30,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.fitmind.data.local.DataStoreManager
 import com.example.fitmind.data.model.Habito
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
@@ -45,17 +48,33 @@ fun AddHabitScreen(
     authViewModel: AuthViewModel = viewModel(),
     habitViewModel: HabitViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val dataStoreManager = remember { DataStoreManager(context) }
+    val habitViewModelWithDataStore = remember(habitViewModel) {
+        HabitViewModel(dataStoreManager = dataStoreManager)
+    }
+    
     var nombre by remember { mutableStateOf("") }
     var categoria by remember { mutableStateOf("") }
     var frecuencia by remember { mutableStateOf("") }
-    val isLoading by habitViewModel.isLoading.collectAsState()
-    val errorMessage by habitViewModel.errorMessage.collectAsState()
+    val isLoading by habitViewModelWithDataStore.isLoading.collectAsState()
+    val errorMessage by habitViewModelWithDataStore.errorMessage.collectAsState()
+    val successfullyAdded by habitViewModelWithDataStore.successfullyAdded.collectAsState()
     val currentUserId = authViewModel.getCurrentUserId()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
+        }
+    }
+    
+    LaunchedEffect(successfullyAdded) {
+        if (successfullyAdded) {
+            Toast.makeText(context, "🏋️‍♂️ Hábito agregado correctamente", Toast.LENGTH_SHORT).show()
+            navController.navigate("home") {
+                popUpTo("addHabit") { inclusive = true }
+            }
         }
     }
 
@@ -114,8 +133,7 @@ fun AddHabitScreen(
                                 fechaInicio = System.currentTimeMillis().toString(),
                                 usuarioId = userId
                             )
-                            habitViewModel.createHabit(habit)
-                            navController.popBackStack()
+                            habitViewModelWithDataStore.createHabit(habit)
                         }
                     },
                     enabled = !isLoading && nombre.isNotBlank() && categoria.isNotBlank() && frecuencia.isNotBlank(),
@@ -126,6 +144,7 @@ fun AddHabitScreen(
                             modifier = Modifier.padding(8.dp),
                             color = MaterialTheme.colorScheme.onPrimary
                         )
+                        Text("Guardando...", modifier = Modifier.padding(start = 8.dp))
                     } else {
                         Text("Guardar Hábito")
                     }
