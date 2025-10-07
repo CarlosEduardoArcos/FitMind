@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import android.util.Log
 import com.example.fitmind.R
 import com.example.fitmind.core.AppConfig
 import com.example.fitmind.viewmodel.AuthViewModel
@@ -65,17 +66,29 @@ fun SplashScreen(
     // Navigate based on authentication state or guest mode
     LaunchedEffect(isAuthenticated) {
         if (startAnimation) { // Only navigate after animation has started
-            if (AppConfig.isGuestMode || AppConfig.isMockMode) {
-                navController.navigate("home") { 
-                    popUpTo("splash") { inclusive = true } 
+            try {
+                if (AppConfig.isGuestMode || AppConfig.isMockMode) {
+                    navController.navigate("home") { 
+                        popUpTo("splash") { inclusive = true } 
+                    }
+                } else if (isAuthenticated) {
+                    navController.navigate("home") {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                } else {
+                    navController.navigate("login") {
+                        popUpTo("splash") { inclusive = true }
+                    }
                 }
-            } else if (isAuthenticated) {
-                navController.navigate("home") {
-                    popUpTo("splash") { inclusive = true }
-                }
-            } else {
-                navController.navigate("login") {
-                    popUpTo("splash") { inclusive = true }
+            } catch (e: Exception) {
+                Log.e("FitMind", "Error en navegación del SplashScreen: ${e.message}")
+                // En caso de error, ir a login como fallback
+                try {
+                    navController.navigate("login") {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                } catch (fallbackError: Exception) {
+                    Log.e("FitMind", "Error en navegación de fallback: ${fallbackError.message}")
                 }
             }
         }

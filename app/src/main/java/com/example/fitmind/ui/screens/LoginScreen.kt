@@ -13,6 +13,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -192,13 +194,13 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Botón de login mejorado
-                    androidx.compose.material3.Button(
+                    Button(
                         onClick = { authViewModel.login(email, password) },
                         enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (isLoading) {
-                            androidx.compose.material3.CircularProgressIndicator(
+                            CircularProgressIndicator(
                                 modifier = Modifier.padding(8.dp),
                                 color = MaterialTheme.colorScheme.onPrimary
                             )

@@ -1,5 +1,6 @@
 package com.example.fitmind.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -101,43 +103,81 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            if (habits.isEmpty() && !isLoading) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Aún no tienes hábitos registrados",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(habits) { habit ->
-                        HabitCard(habit = habit)
+                if (isLoading) {
+                    // Mostrar loading mientras se cargan los datos
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            androidx.compose.material3.CircularProgressIndicator()
+                            Text(
+                                text = "Cargando tus hábitos...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                } else if (habits.isEmpty()) {
+                    // Mostrar mensaje amigable cuando no hay hábitos
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = "🧘‍♂️ Aún no tienes hábitos registrados",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Presiona el botón ➕ para agregar uno nuevo y comenzar tu viaje hacia una mente más saludable.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Button(
+                                onClick = { navController.navigate("addHabit") },
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("Agregar mi primer hábito")
+                            }
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(habits) { habit ->
+                            HabitCard(habit = habit)
+                        }
                     }
                 }
-            }
-            
-            // Indicador de modo mock/guest
-            if (AppConfig.isMockMode || AppConfig.isGuestMode) {
-                Text(
-                    text = if (AppConfig.isGuestMode)
-                        "🔹 Estás en modo invitado (datos locales)"
-                    else
-                        "🔧 Modo local activo (sin Firebase)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(8.dp)
-                )
+                
+                // Indicador de modo mock/guest
+                if (AppConfig.isMockMode || AppConfig.isGuestMode) {
+                    Text(
+                        text = if (AppConfig.isGuestMode)
+                            "🔹 Estás en modo invitado (datos locales)"
+                        else
+                            "🔧 Modo local activo (sin Firebase)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
             }
         }
     }
-}
 
 @Composable
 fun HabitCard(habit: Habito) {

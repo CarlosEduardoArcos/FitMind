@@ -1,5 +1,6 @@
 package com.example.fitmind.ui.components
 
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -48,15 +49,19 @@ fun BottomNavigationBar(navController: NavController) {
                 selected = currentRoute == item.route,
                 onClick = {
                     if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            // Pop up to the start destination to avoid building up a large stack
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
+                        try {
+                            navController.navigate(item.route) {
+                                // Pop up to the start destination to avoid building up a large stack
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                // Avoid multiple copies of the same destination
+                                launchSingleTop = true
+                                // Restore state when reselecting a previously selected item
+                                restoreState = true
                             }
-                            // Avoid multiple copies of the same destination
-                            launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
-                            restoreState = true
+                        } catch (e: Exception) {
+                            Log.e("FitMind", "Error al navegar a ${item.route}: ${e.message}")
                         }
                     }
                 }
