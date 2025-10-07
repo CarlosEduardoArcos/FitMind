@@ -4,13 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -149,14 +154,113 @@ fun GraphicsSection() {
 @Composable
 fun StatisticsSection() {
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5F5)) // Fondo gris claro como en la foto
+            .padding(16.dp)
     ) {
-        Text(
-            text = "Sección de Estadísticas\n(Próximamente)",
-            color = Color.White.copy(alpha = 0.7f),
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Tarjeta 1: Frecuencia cardíaca
+            MetricCard(
+                icon = "❤️",
+                title = "Frecuencia cardíaca",
+                value = "0 bpm",
+                progress = 0f
+            )
+            
+            // Tarjeta 2: Tiempo calentamiento
+            MetricCard(
+                icon = "⚙️",
+                title = "Tiempo calentamiento",
+                value = "0 min",
+                progress = 0f
+            )
+            
+            // Tarjeta 3: Pasos
+            MetricCard(
+                icon = "ℹ️",
+                title = "Pasos",
+                value = "0 / 8000",
+                progress = 0f
+            )
+            
+            // Tarjeta 4: Kcal
+            MetricCard(
+                icon = "⭐",
+                title = "Kcal",
+                value = "0 / 250",
+                progress = 0f
+            )
+            
+            // Tarjeta 5: Km
+            MetricCard(
+                icon = "📍",
+                title = "Km",
+                value = "0 / 5",
+                progress = 0f
+            )
+        }
+    }
+}
+
+@Composable
+fun MetricCard(
+    icon: String,
+    title: String,
+    value: String,
+    progress: Float
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icono azul
+            Text(
+                text = icon,
+                fontSize = 32.sp,
+                modifier = Modifier.padding(end = 16.dp)
+            )
+            
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                // Título
+                Text(
+                    text = title,
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Valor
+                Text(
+                    text = value,
+                    color = Color.Black,
+                    fontSize = 14.sp
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Barra de progreso
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp),
+                    color = Color(0xFF00C853), // Verde turquesa
+                    trackColor = Color.LightGray
+                )
+            }
+        }
     }
 }
