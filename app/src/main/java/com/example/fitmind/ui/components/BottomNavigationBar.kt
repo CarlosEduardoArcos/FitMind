@@ -14,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -23,23 +22,19 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-    val gradient = Brush.horizontalGradient(
-        colors = listOf(Color(0xFF3A86FF), Color(0xFF06D6A0))
-    )
-
     val items = listOf(
-        NavItem("home", Icons.Default.Home, "Hábitos"),
+        NavItem("home", Icons.Default.Home, "Inicio"),
         NavItem("dashboards", Icons.Default.Info, "Gráficos"),
-        NavItem("settings", Icons.Default.Settings, "Ajustes")
+        NavItem("settings", Icons.Default.Settings, "Configuración")
     )
 
     NavigationBar(
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp)
-            .background(gradient)
-            .padding(horizontal = 8.dp),
-        containerColor = Color.Transparent
+            .height(80.dp)
+            .background(Color(0xFF1A1A1A))
+            .padding(top = 6.dp),
+        containerColor = Color(0xFF1A1A1A)
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -47,9 +42,9 @@ fun BottomNavigationBar(navController: NavController) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
             val tint by animateColorAsState(
-                targetValue = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f)
+                targetValue = if (isSelected) Color(0xFF06D6A0) else Color.White.copy(alpha = 0.7f)
             )
-            val scale by animateFloatAsState(targetValue = if (isSelected) 1.2f else 1f)
+            val scale by animateFloatAsState(targetValue = if (isSelected) 1.3f else 1f)
 
             NavigationBarItem(
                 selected = isSelected,

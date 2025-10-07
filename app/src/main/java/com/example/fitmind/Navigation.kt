@@ -49,7 +49,7 @@ fun AppNavigation(
                 composable("login") { LoginScreen(navController, darkTheme, onToggleTheme) }
                 composable("home") { HomeScreen(navController, viewModel<HabitViewModel>()) }
                 composable("addHabit") { AddHabitScreen(navController, viewModel<HabitViewModel>()) }
-                composable("dashboards") { DashboardsScreen(navController, viewModel<ChartViewModel>()) }
+                composable("dashboards") { DashboardsScreen(navController, viewModel<HabitViewModel>()) }
                 composable("settings") { SettingsScreen(navController) }
             }
         }
