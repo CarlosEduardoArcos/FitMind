@@ -45,7 +45,7 @@ fun StatsTile(icon: ImageVector, title: String, value: String, progress: Float) 
                 }
             }
             LinearProgressIndicator(
-                progress = progress,
+                progress = { progress },
                 modifier = Modifier
                     .width(100.dp)
                     .height(6.dp)
