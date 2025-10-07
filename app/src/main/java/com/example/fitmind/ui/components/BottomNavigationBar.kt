@@ -23,7 +23,7 @@ sealed class BottomNavItem(
     val icon: ImageVector
 ) {
     object Home : BottomNavItem("home", "Inicio", Icons.Filled.Home)
-    object Charts : BottomNavItem("charts", "Gráficos", Icons.Filled.Info)
+    object Charts : BottomNavItem("dashboards", "Gráficos", Icons.Filled.Info)
     object Settings : BottomNavItem("settings", "Configuración", Icons.Filled.Settings)
 }
 

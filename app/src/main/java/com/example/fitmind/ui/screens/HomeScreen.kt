@@ -19,22 +19,28 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,7 +67,10 @@ fun HomeScreen(
     val context = LocalContext.current
     val dataStoreManager = remember { DataStoreManager(context) }
     val habitViewModelWithDataStore = remember(habitViewModel) {
-        HabitViewModel(dataStoreManager = dataStoreManager)
+        HabitViewModel(
+            app = context.applicationContext as android.app.Application,
+            dataStoreManager = dataStoreManager
+        )
     }
     
     val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
@@ -186,7 +195,12 @@ fun HomeScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(habits) { habit ->
-                                HabitCard(habit = habit)
+                                HabitCard(
+                                    habit = habit,
+                                    onDelete = { habitToDelete ->
+                                        habitViewModelWithDataStore.deleteHabitLocal(habitToDelete)
+                                    }
+                                )
                             }
                         }
                     }
@@ -209,7 +223,12 @@ fun HomeScreen(
     }
 
 @Composable
-fun HabitCard(habit: Habito) {
+fun HabitCard(
+    habit: Habito,
+    onDelete: (Habito) -> Unit
+) {
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -220,27 +239,71 @@ fun HabitCard(habit: Habito) {
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = habit.nombre,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.padding(vertical = 4.dp))
-            Text(
-                text = "Categoría: ${habit.categoria}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = "Frecuencia: ${habit.frecuencia}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = habit.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                Text(
+                    text = "Categoría: ${habit.categoria}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Frecuencia: ${habit.frecuencia}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            // Botón eliminar
+            IconButton(
+                onClick = { showConfirmDialog = true }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar hábito",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
+    }
+    
+    // Diálogo de confirmación
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text("Eliminar hábito") },
+            text = { Text("¿Eliminar ${habit.nombre}? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete(habit)
+                        showConfirmDialog = false
+                    }
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 

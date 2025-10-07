@@ -11,8 +11,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import android.util.Log
 import com.example.fitmind.ui.screens.AddHabitScreen
 import com.example.fitmind.ui.screens.ChartsScreen
+import com.example.fitmind.ui.screens.DashboardsScreen
 import com.example.fitmind.ui.screens.HabitDetailsScreen
 import com.example.fitmind.ui.screens.HomeScreen
 import com.example.fitmind.ui.screens.LoginScreen
@@ -28,6 +30,7 @@ object Routes {
     const val AddHabit = "addHabit"
     const val HabitDetails = "habitDetails"
     const val Charts = "charts"
+    const val Dashboards = "dashboards"
     const val Settings = "settings"
 }
 
@@ -46,6 +49,9 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
         composable(Routes.AddHabit) { AddHabitScreen(navController) }
         composable(Routes.HabitDetails) { HabitDetailsScreen(navController) }
         composable(Routes.Charts) { ChartsScreen(navController) }
+        composable(Routes.Dashboards) { 
+            DashboardsScreen(navController) 
+        }
         composable(Routes.Settings) { SettingsScreen(navController) }
     }
 }

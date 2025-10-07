@@ -51,12 +51,16 @@ fun AddHabitScreen(
     val context = LocalContext.current
     val dataStoreManager = remember { DataStoreManager(context) }
     val habitViewModelWithDataStore = remember(habitViewModel) {
-        HabitViewModel(dataStoreManager = dataStoreManager)
+        HabitViewModel(
+            app = context.applicationContext as android.app.Application,
+            dataStoreManager = dataStoreManager
+        )
     }
     
     var nombre by remember { mutableStateOf("") }
     var categoria by remember { mutableStateOf("") }
     var frecuencia by remember { mutableStateOf("") }
+    val habits by habitViewModelWithDataStore.habits.collectAsState()
     val isLoading by habitViewModelWithDataStore.isLoading.collectAsState()
     val errorMessage by habitViewModelWithDataStore.errorMessage.collectAsState()
     val successfullyAdded by habitViewModelWithDataStore.successfullyAdded.collectAsState()
@@ -125,15 +129,18 @@ fun AddHabitScreen(
 
                 Button(
                     onClick = {
-                        currentUserId?.let { userId ->
-                            val habit = Habito(
-                                nombre = nombre,
-                                categoria = categoria,
-                                frecuencia = frecuencia,
-                                fechaInicio = System.currentTimeMillis().toString(),
-                                usuarioId = userId
-                            )
-                            habitViewModelWithDataStore.createHabit(habit)
+                        val habit = Habito(
+                            nombre = nombre,
+                            categoria = categoria,
+                            frecuencia = frecuencia,
+                            fechaInicio = System.currentTimeMillis().toString(),
+                            usuarioId = currentUserId ?: "guest"
+                        )
+                        habitViewModelWithDataStore.addHabitLocal(habit)
+                        // Mostrar toast inmediatamente
+                        Toast.makeText(context, "🏋️‍♂️ Hábito agregado correctamente", Toast.LENGTH_SHORT).show()
+                        navController.navigate("home") {
+                            popUpTo("addHabit") { inclusive = true }
                         }
                     },
                     enabled = !isLoading && nombre.isNotBlank() && categoria.isNotBlank() && frecuencia.isNotBlank(),

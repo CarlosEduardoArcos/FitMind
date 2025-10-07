@@ -1,14 +1,20 @@
 package com.example.fitmind.viewmodel
 
+import android.app.Application
 import android.content.Context
-import androidx.lifecycle.ViewModel
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fitmind.core.AppConfig
 import com.example.fitmind.data.local.DataStoreManager
+import com.example.fitmind.data.local.getLocalHabitsFlow
+import com.example.fitmind.data.local.saveHabitLocally
+import com.example.fitmind.data.local.deleteHabitLocally
 import com.example.fitmind.data.mock.MockHabitRepository
 import com.example.fitmind.data.model.Habito
 import com.example.fitmind.data.model.Registro
 import com.example.fitmind.data.repository.HabitRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,13 +23,14 @@ import kotlinx.coroutines.launch
 
 /**
  * ViewModel for Habit CRUD and progress registration, exposing flows for UI.
- * Supports both Firebase and Mock modes.
+ * Supports both Firebase and local DataStore modes.
  */
 class HabitViewModel(
+    private val app: Application,
     private val firebaseRepository: HabitRepository = HabitRepository(),
     private val mockRepository: MockHabitRepository = MockHabitRepository(),
     private val dataStoreManager: DataStoreManager? = null
-) : ViewModel() {
+) : AndroidViewModel(app) {
 
     private val _habits = MutableStateFlow<List<Habito>>(emptyList())
     val habits: StateFlow<List<Habito>> = _habits.asStateFlow()
@@ -36,6 +43,15 @@ class HabitViewModel(
     
     private val _successfullyAdded = MutableStateFlow(false)
     val successfullyAdded: StateFlow<Boolean> = _successfullyAdded.asStateFlow()
+
+    init {
+        // Observar hábitos locales automáticamente
+        viewModelScope.launch {
+            getLocalHabitsFlow(app.applicationContext).collect { habitsList ->
+                _habits.value = habitsList
+            }
+        }
+    }
 
     fun observeHabits(userId: String) {
         viewModelScope.launch {
@@ -53,6 +69,7 @@ class HabitViewModel(
                     }
                 }
             } catch (e: Exception) {
+                Log.e("FitMind", "Error al cargar hábitos: ${e.message}")
                 _errorMessage.value = e.message ?: "Error al cargar hábitos"
             } finally {
                 _isLoading.value = false
@@ -76,10 +93,36 @@ class HabitViewModel(
                 }
                 _errorMessage.value = null
             } catch (e: Exception) {
+                Log.e("FitMind", "Error al crear hábito: ${e.message}")
                 _errorMessage.value = e.message ?: "Error al crear hábito"
                 _successfullyAdded.value = false
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    // Funciones para persistencia local
+    fun addHabitLocal(hab: Habito) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                saveHabitLocally(app.applicationContext, hab)
+                Log.d("FitMind", "Hábito agregado localmente: ${hab.nombre}")
+            } catch (e: Exception) {
+                Log.e("FitMind", "Error al agregar hábito local: ${e.message}")
+                _errorMessage.value = e.message ?: "Error al agregar hábito"
+            }
+        }
+    }
+
+    fun deleteHabitLocal(hab: Habito) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                deleteHabitLocally(app.applicationContext, hab)
+                Log.d("FitMind", "Hábito eliminado localmente: ${hab.nombre}")
+            } catch (e: Exception) {
+                Log.e("FitMind", "Error al eliminar hábito local: ${e.message}")
+                _errorMessage.value = e.message ?: "Error al eliminar hábito"
             }
         }
     }
@@ -96,6 +139,7 @@ class HabitViewModel(
                 }
                 _errorMessage.value = null
             } catch (e: Exception) {
+                Log.e("FitMind", "Error al agregar registro: ${e.message}")
                 _errorMessage.value = e.message ?: "Error al agregar registro"
             } finally {
                 _isLoading.value = false
