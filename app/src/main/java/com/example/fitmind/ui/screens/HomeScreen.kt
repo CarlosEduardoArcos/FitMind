@@ -1,12 +1,7 @@
 package com.example.fitmind.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -31,30 +26,24 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.fitmind.model.Habito
-import com.example.fitmind.ui.components.BottomNavigationBar
 import com.example.fitmind.viewmodel.HabitViewModel
 
 @Composable
@@ -62,90 +51,67 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
     val habits by habitViewModel.habits.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var habitToDelete by remember { mutableStateOf<Habito?>(null) }
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Gradiente fitness
-    val fitnessGradient = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF3A86FF), // Azul principal
-            Color(0xFF06D6A0)  // Verde energía
-        ),
-        start = androidx.compose.ui.geometry.Offset(0f, 0f),
-        end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
+    val gradient = Brush.verticalGradient(
+        colors = listOf(Color(0xFF3A86FF), Color(0xFF06D6A0)),
+        startY = 0f,
+        endY = Float.POSITIVE_INFINITY
     )
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate("addHabit") },
-                containerColor = Color(0xFF06D6A0)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar hábito")
-            }
-        },
-        bottomBar = {
-            BottomNavigationBar(navController)
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(fitnessGradient)
-        ) {
-            Column(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(gradient)
+    ) {
+        if (habits.isEmpty()) {
+            Box(
                 modifier = Modifier
-                    .padding(padding)
                     .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    "Mis hábitos",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp)
-                )
-
-                if (habits.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "🧘‍♂️ Aún no tienes hábitos. Presiona ➕ para agregar uno.",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        itemsIndexed(habits) { index, habit ->
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = slideInVertically(
-                                    initialOffsetY = { it },
-                                    animationSpec = tween(durationMillis = 300, delayMillis = index * 100)
-                                ) + fadeIn(animationSpec = tween(300, delayMillis = index * 100)),
-                                exit = slideOutVertically() + fadeOut()
-                            ) {
-                                HabitCard(
-                                    habit = habit,
-                                    onComplete = {
-                                        habitViewModel.toggleComplete(habit)
-                                        if (!habit.completado) {
-                                            // Mostrar snackbar cuando se complete
-                                            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                                                snackbarHostState.showSnackbar("🎉 Hábito completado, ¡bien hecho!")
-                                            }
-                                        }
-                                    },
-                                    onDelete = { habitToDelete = it; showDialog = true }
-                                )
-                            }
-                        }
-                    }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    Text(
+                        text = "Aún no tienes hábitos.\nPresiona + para agregar uno.",
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        color = Color(0xFF3A86FF),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
             }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                items(habits) { habit ->
+                    HabitCard(
+                        habit = habit,
+                        onDelete = { habitViewModel.deleteHabitLocal(habit) }
+                    )
+                }
+            }
+        }
+
+        FloatingActionButton(
+            onClick = { navController.navigate("addHabit") },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp),
+            containerColor = Color(0xFF06D6A0),
+            contentColor = Color.White,
+            shape = CircleShape
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Agregar hábito")
         }
     }
 
@@ -168,7 +134,6 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
 @Composable
 fun HabitCard(
     habit: Habito,
-    onComplete: () -> Unit,
     onDelete: (Habito) -> Unit
 ) {
     val animatedProgress by animateFloatAsState(
@@ -229,7 +194,7 @@ fun HabitCard(
             Row {
                 // Botón completar
                 IconButton(
-                    onClick = onComplete,
+                    onClick = { /* TODO: Implementar toggle de completado */ },
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Icon(
