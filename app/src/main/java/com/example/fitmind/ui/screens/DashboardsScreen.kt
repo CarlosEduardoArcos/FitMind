@@ -46,16 +46,16 @@ fun DashboardsScreen(navController: NavController, habitViewModel: HabitViewMode
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Tab Bar superior con colores exactos especificados
-        Surface(
-            color = Color(0xFF2C2C2C), // Fondo gris oscuro exacto
+        // Tab Bar superior con fondo oscuro forzado
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
+                .background(Color(0xFF2C2C2C)) // Forzar fondo oscuro con Box
         ) {
             TabRow(
                 selectedTabIndex = selectedTabIndex,
-                containerColor = Color(0xFF2C2C2C), // Fondo gris oscuro explícito
+                containerColor = Color.Transparent, // Transparente para que se vea el fondo del Box
                 contentColor = Color.White,
                 modifier = Modifier.fillMaxWidth(),
                 indicator = { tabPositions ->
