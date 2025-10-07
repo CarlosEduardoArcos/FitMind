@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.fitmind.R
+import com.example.fitmind.core.AppConfig
 import com.example.fitmind.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,13 +59,17 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         startAnimation = true
         authViewModel.checkUserSession()
-        kotlinx.coroutines.delay(3000) // Show splash for 3 seconds
+        kotlinx.coroutines.delay(1500) // Show splash for 1.5 seconds
     }
     
-    // Navigate based on authentication state
+    // Navigate based on authentication state or guest mode
     LaunchedEffect(isAuthenticated) {
         if (startAnimation) { // Only navigate after animation has started
-            if (isAuthenticated) {
+            if (AppConfig.isGuestMode || AppConfig.isMockMode) {
+                navController.navigate("home") { 
+                    popUpTo("splash") { inclusive = true } 
+                }
+            } else if (isAuthenticated) {
                 navController.navigate("home") {
                     popUpTo("splash") { inclusive = true }
                 }

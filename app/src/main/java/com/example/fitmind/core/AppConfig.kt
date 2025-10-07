@@ -5,7 +5,8 @@ package com.example.fitmind.core
  * Cambia isMockMode a false cuando quieras usar Firebase real.
  */
 object AppConfig {
-    const val isMockMode = true
+    var isMockMode = true
+    var isGuestMode = false
     
     // Configuraciones adicionales para el modo mock
     object Mock {

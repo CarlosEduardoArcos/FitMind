@@ -58,7 +58,7 @@ fun HomeScreen(
     }
 
     LaunchedEffect(isAuthenticated) {
-        if (!isAuthenticated) {
+        if (!isAuthenticated && !AppConfig.isGuestMode) {
             navController.navigate("login") {
                 popUpTo("home") { inclusive = true }
             }
@@ -123,10 +123,13 @@ fun HomeScreen(
                 }
             }
             
-            // Indicador de modo mock
-            if (AppConfig.isMockMode) {
+            // Indicador de modo mock/guest
+            if (AppConfig.isMockMode || AppConfig.isGuestMode) {
                 Text(
-                    text = "🔧 Modo local activo (sin Firebase)",
+                    text = if (AppConfig.isGuestMode)
+                        "🔹 Estás en modo invitado (datos locales)"
+                    else
+                        "🔧 Modo local activo (sin Firebase)",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray,
                     modifier = Modifier.padding(8.dp)

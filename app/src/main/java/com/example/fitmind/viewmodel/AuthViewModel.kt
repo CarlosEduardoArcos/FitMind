@@ -53,19 +53,23 @@ class AuthViewModel(
 
     fun login(email: String, password: String) {
         _isLoading.value = true
+        _errorMessage.value = null
         viewModelScope.launch {
             try {
-                val result = if (AppConfig.isMockMode) {
-                    mockRepository.loginUser(email, password)
-                } else {
-                    firebaseRepository.loginUser(email, password)
-                }
-                
-                if (result.isSuccess) {
+                if (AppConfig.isMockMode) {
+                    // Simular delay para mejor UX en modo mock
+                    kotlinx.coroutines.delay(1000)
+                    // En modo mock, siempre simular login exitoso
                     _isAuthenticated.value = true
                     _errorMessage.value = null
                 } else {
-                    _errorMessage.value = result.exceptionOrNull()?.message ?: "Error en el login"
+                    val result = firebaseRepository.loginUser(email, password)
+                    if (result.isSuccess) {
+                        _isAuthenticated.value = true
+                        _errorMessage.value = null
+                    } else {
+                        _errorMessage.value = result.exceptionOrNull()?.message ?: "Error en el login"
+                    }
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Error desconocido"
@@ -85,7 +89,9 @@ class AuthViewModel(
     }
 
     fun getCurrentUserId(): String? = if (_isAuthenticated.value) {
-        if (AppConfig.isMockMode) {
+        if (AppConfig.isGuestMode) {
+            AppConfig.Mock.defaultUserId
+        } else if (AppConfig.isMockMode) {
             mockRepository.getCurrentUserId()
         } else {
             firebaseRepository.getCurrentUserId()
@@ -93,6 +99,11 @@ class AuthViewModel(
     } else null
 
     fun checkUserSession() {
+        if (AppConfig.isGuestMode) {
+            _isAuthenticated.value = true
+            return
+        }
+        
         val currentUser = if (AppConfig.isMockMode) {
             mockRepository.getCurrentUserId()
         } else {

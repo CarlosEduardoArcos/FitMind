@@ -11,12 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.fitmind.core.AppConfig
 import com.example.fitmind.ui.components.BottomNavigationBar
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.NotificationViewModel
@@ -162,6 +164,61 @@ fun SettingsScreen(
                             text = error,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+
+            // App Mode Configuration Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "⚙️ Configuración de modo de la app",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Usar modo local (sin Firebase)",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Switch(
+                            checked = AppConfig.isMockMode,
+                            onCheckedChange = { value ->
+                                AppConfig.isMockMode = value
+                                if (value) {
+                                    AppConfig.isGuestMode = true
+                                } else {
+                                    AppConfig.isGuestMode = false
+                                }
+                            }
+                        )
+                    }
+
+                    if (AppConfig.isMockMode) {
+                        Text(
+                            text = "Modo local activo: los datos no se sincronizan con la nube.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    } else {
+                        Text(
+                            text = "Modo Firebase activo: se requiere conexión y login.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
                         )
                     }
                 }
