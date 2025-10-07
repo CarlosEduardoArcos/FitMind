@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,12 +22,24 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(
+fun BottomNavigationBar(
+    navController: NavController,
+    isAdmin: Boolean = false
+) {
+    val baseItems = listOf(
         NavItem("home", Icons.Default.Home, "Inicio"),
         NavItem("dashboards", Icons.Default.Info, "Gráficos"),
         NavItem("settings", Icons.Default.Settings, "Configuración")
     )
+    
+    val adminItems = listOf(
+        NavItem("home", Icons.Default.Home, "Inicio"),
+        NavItem("dashboards", Icons.Default.Info, "Gráficos"),
+        NavItem("admin", Icons.Default.Person, "Admin"),
+        NavItem("settings", Icons.Default.Settings, "Configuración")
+    )
+    
+    val items = if (isAdmin) adminItems else baseItems
 
     NavigationBar(
         modifier = Modifier
@@ -82,3 +95,4 @@ data class NavItem(
     val icon: ImageVector,
     val label: String
 )
+

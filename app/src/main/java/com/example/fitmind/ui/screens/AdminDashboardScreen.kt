@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,16 +15,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.fitmind.data.FirebaseRepository
+import com.example.fitmind.viewmodel.AdminViewModel
 
 @Composable
 fun AdminDashboardScreen(
-    navController: NavController
+    navController: NavController,
+    adminViewModel: AdminViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val repository = remember { FirebaseRepository() }
-    var users by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    val users by adminViewModel.users.collectAsState()
+    val totalUsers by adminViewModel.totalUsers.collectAsState()
+    val totalHabits by adminViewModel.totalHabits.collectAsState()
+    val averageHabits by adminViewModel.averageHabits.collectAsState()
+    val isLoading by adminViewModel.isLoading.collectAsState()
+    
+    var showUserHabits by remember { mutableStateOf(false) }
+    var selectedUserId by remember { mutableStateOf("") }
+    var selectedUserName by remember { mutableStateOf("") }
 
     val gradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF3A86FF), Color(0xFF06D6A0)),
@@ -31,10 +42,18 @@ fun AdminDashboardScreen(
         endY = Float.POSITIVE_INFINITY
     )
 
-    LaunchedEffect(Unit) {
-        repository.getAllUsers { usersList ->
-            users = usersList
-        }
+    if (showUserHabits) {
+        UserHabitsScreen(
+            userId = selectedUserId,
+            userName = selectedUserName,
+            onDismiss = {
+                showUserHabits = false
+                selectedUserId = ""
+                selectedUserName = ""
+                adminViewModel.clearSelectedUserHabits()
+            },
+            adminViewModel = adminViewModel
+        )
     }
 
     Box(
@@ -46,10 +65,11 @@ fun AdminDashboardScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            // Título principal
             Text(
                 text = "Panel de Administración 👑",
                 color = Color.White,
-                style = MaterialTheme.typography.headlineSmall,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
             
@@ -58,105 +78,242 @@ fun AdminDashboardScreen(
             Text(
                 text = "Gestión de usuarios y hábitos",
                 color = Color.White.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.bodyMedium
+                fontSize = 16.sp
             )
             
             Spacer(Modifier.height(24.dp))
 
+            // Estadísticas globales
+            StatisticsCards(
+                totalUsers = totalUsers,
+                totalHabits = totalHabits,
+                averageHabits = averageHabits
+            )
+            
+            Spacer(Modifier.height(24.dp))
+
+            // Lista de usuarios
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
-                elevation = CardDefaults.cardElevation(6.dp)
+                modifier = Modifier.fillMaxSize(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C)),
+                elevation = CardDefaults.cardElevation(8.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(20.dp)
                 ) {
-                    Text(
-                        text = "Usuarios registrados (${users.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF3A86FF)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Usuarios registrados (${users.size})",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        Button(
+                            onClick = {
+                                adminViewModel.loadUsers()
+                                adminViewModel.loadStatistics()
+                                Toast.makeText(context, "Datos actualizados", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF00D9A3)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Actualizar", color = Color.White)
+                        }
+                    }
                     
                     Spacer(Modifier.height(16.dp))
                     
-                    if (users.isEmpty()) {
-                        Text(
-                            text = "Cargando usuarios...",
-                            color = Color.Gray,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF00D9A3)
+                            )
+                        }
+                    } else if (users.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No hay usuarios registrados",
+                                color = Color(0xFFB0BEC5),
+                                fontSize = 16.sp
+                            )
+                        }
                     } else {
                         LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(users) { user ->
-                                UserCard(user = user)
+                            items(users) { (uid, userData) ->
+                                UserCard(
+                                    uid = uid,
+                                    userData = userData,
+                                    onViewHabits = { userId, userName ->
+                                        selectedUserId = userId
+                                        selectedUserName = userName
+                                        showUserHabits = true
+                                        adminViewModel.loadHabitsForUser(userId)
+                                    }
+                                )
                             }
                         }
                     }
                 }
-            }
-            
-            Spacer(Modifier.height(16.dp))
-            
-            Button(
-                onClick = {
-                    Toast.makeText(context, "Actualizando lista de usuarios...", Toast.LENGTH_SHORT).show()
-                    repository.getAllUsers { usersList ->
-                        users = usersList
-                        Toast.makeText(context, "Lista actualizada", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF3A86FF)
-                )
-            ) {
-                Text("Actualizar lista", fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
 @Composable
-fun UserCard(user: Map<String, Any>) {
-    Card(
+fun StatisticsCards(
+    totalUsers: Int,
+    totalHabits: Int,
+    averageHabits: Double
+) {
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-        elevation = CardDefaults.cardElevation(2.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // Total usuarios
+        StatisticCard(
+            title = "Usuarios",
+            value = totalUsers.toString(),
+            icon = "👥",
+            modifier = Modifier.weight(1f)
+        )
+        
+        // Total hábitos
+        StatisticCard(
+            title = "Hábitos",
+            value = totalHabits.toString(),
+            icon = "📊",
+            modifier = Modifier.weight(1f)
+        )
+        
+        // Promedio hábitos
+        StatisticCard(
+            title = "Promedio",
+            value = String.format("%.1f", averageHabits),
+            icon = "📈",
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun StatisticCard(
+    title: String,
+    value: String,
+    icon: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C)),
+        elevation = CardDefaults.cardElevation(6.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = if (user["rol"] == "admin") "👑" else "👤",
-                style = MaterialTheme.typography.headlineSmall
+                text = icon,
+                fontSize = 24.sp
             )
             
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.height(8.dp))
             
-            Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = value,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Text(
+                text = title,
+                color = Color(0xFFB0BEC5),
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun UserCard(
+    uid: String,
+    userData: Map<String, Any>,
+    onViewHabits: (String, String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
+        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icono del usuario
+            Text(
+                text = if (userData["rol"] == "admin") "👑" else "👤",
+                fontSize = 32.sp
+            )
+            
+            Spacer(Modifier.width(16.dp))
+            
+            // Información del usuario
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
-                    text = user["nombre"]?.toString() ?: "Sin nombre",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    text = userData["nombre"]?.toString() ?: "Sin nombre",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
                 
                 Text(
-                    text = user["email"]?.toString() ?: "Sin email",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    text = userData["email"]?.toString() ?: "Sin email",
+                    color = Color(0xFFB0BEC5),
+                    fontSize = 14.sp
                 )
                 
                 Text(
-                    text = "Rol: ${user["rol"]?.toString() ?: "usuario"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (user["rol"] == "admin") Color(0xFF00C853) else Color.Gray,
+                    text = "Rol: ${userData["rol"]?.toString() ?: "usuario"}",
+                    color = if (userData["rol"] == "admin") Color(0xFF00D9A3) else Color(0xFFB0BEC5),
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
+                )
+            }
+            
+            // Botón ver hábitos
+            Button(
+                onClick = {
+                    onViewHabits(uid, userData["nombre"]?.toString() ?: "Usuario")
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF00D9A3)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "📊 Ver hábitos",
+                    color = Color.White,
+                    fontSize = 12.sp
                 )
             }
         }

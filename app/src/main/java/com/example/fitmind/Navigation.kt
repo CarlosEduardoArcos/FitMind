@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -21,6 +22,7 @@ import com.example.fitmind.ui.screens.LoginScreen
 import com.example.fitmind.ui.screens.RegisterScreen
 import com.example.fitmind.ui.screens.SettingsScreen
 import com.example.fitmind.ui.screens.SplashScreen
+import com.example.fitmind.viewmodel.AdminViewModel
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.ChartViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
@@ -34,13 +36,15 @@ fun AppNavigation(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val authViewModel: AuthViewModel = viewModel()
+    val userRole by authViewModel.userRole.collectAsState()
+    val isAdmin = userRole == "admin"
 
-    val showBottomBar = currentRoute !in listOf("splash", "login", "register", "admin")
+    val showBottomBar = currentRoute !in listOf("splash", "login", "register")
 
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                BottomNavigationBar(navController)
+                BottomNavigationBar(navController, isAdmin)
             }
         }
     ) { innerPadding ->
@@ -52,7 +56,7 @@ fun AppNavigation(
                 composable("splash") { SplashScreen(navController) }
                 composable("login") { LoginScreen(navController, darkTheme, onToggleTheme, authViewModel) }
                 composable("register") { RegisterScreen(navController, authViewModel) }
-                composable("admin") { AdminDashboardScreen(navController) }
+                composable("admin") { AdminDashboardScreen(navController, viewModel<AdminViewModel>()) }
                 composable("home") { HomeScreen(navController, viewModel<HabitViewModel>()) }
                 composable("addHabit") { AddHabitScreen(navController, viewModel<HabitViewModel>()) }
                 composable("dashboards") { DashboardsScreen(navController, viewModel<HabitViewModel>()) }

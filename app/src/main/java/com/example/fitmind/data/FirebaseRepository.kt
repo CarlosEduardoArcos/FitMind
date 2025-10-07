@@ -62,17 +62,65 @@ class FirebaseRepository {
             .addOnFailureListener { onResult(false) }
     }
 
-    fun getAllUsers(onResult: (List<Map<String, Any>>) -> Unit) {
+    fun getAllUsers(onResult: (List<Pair<String, Map<String, Any>>>) -> Unit) {
+        db.collection("users")
+            .addSnapshotListener { snapshot, _ ->
+                val users = snapshot?.documents?.map {
+                    it.id to (it.data ?: emptyMap())
+                } ?: emptyList()
+                onResult(users)
+            }
+    }
+
+    fun getUserHabits(userId: String, onResult: (List<Map<String, Any>>) -> Unit) {
+        db.collection("users").document(userId).collection("habitos")
+            .addSnapshotListener { snapshot, _ ->
+                val habits = snapshot?.documents?.map { it.data ?: emptyMap() } ?: emptyList()
+                onResult(habits)
+            }
+    }
+
+    fun getUsersCount(onResult: (Int) -> Unit) {
         db.collection("users")
             .get()
             .addOnSuccessListener { snapshot ->
-                val users = snapshot.documents.map { doc ->
-                    val data = doc.data ?: emptyMap()
-                    data + ("uid" to doc.id)
-                }
-                onResult(users)
+                onResult(snapshot.size())
             }
-            .addOnFailureListener { onResult(emptyList()) }
+            .addOnFailureListener { onResult(0) }
+    }
+
+    fun getTotalHabitsCount(onResult: (Int) -> Unit) {
+        db.collection("users")
+            .get()
+            .addOnSuccessListener { usersSnapshot ->
+                var totalHabits = 0
+                var completedQueries = 0
+                val totalUsers = usersSnapshot.size()
+                
+                if (totalUsers == 0) {
+                    onResult(0)
+                    return@addOnSuccessListener
+                }
+                
+                usersSnapshot.documents.forEach { userDoc ->
+                    db.collection("users").document(userDoc.id).collection("habitos")
+                        .get()
+                        .addOnSuccessListener { habitsSnapshot ->
+                            totalHabits += habitsSnapshot.size()
+                            completedQueries++
+                            if (completedQueries == totalUsers) {
+                                onResult(totalHabits)
+                            }
+                        }
+                        .addOnFailureListener {
+                            completedQueries++
+                            if (completedQueries == totalUsers) {
+                                onResult(totalHabits)
+                            }
+                        }
+                }
+            }
+            .addOnFailureListener { onResult(0) }
     }
 
     fun getCurrentUser() = auth.currentUser
