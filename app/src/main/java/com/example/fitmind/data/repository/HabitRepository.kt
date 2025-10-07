@@ -7,6 +7,7 @@ import com.example.fitmind.data.local.getLocalHabitsFlow
 import com.example.fitmind.data.model.Habito
 import com.example.fitmind.data.model.Registro
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
  * Domain-specific repository that provides a clear API for Habits and Records,
@@ -25,15 +26,22 @@ class HabitRepository(
 
     // Funciones para persistencia local con DataStore
     suspend fun saveHabitLocal(context: Context, habit: Habito) {
-        saveHabitLocally(context, habit)
+        val serialized = "${habit.nombre}|${habit.categoria}|${habit.frecuencia}"
+        saveHabitLocally(context, serialized)
     }
 
     fun observeLocalHabits(context: Context): Flow<List<Habito>> {
-        return getLocalHabitsFlow(context)
+        return getLocalHabitsFlow(context).map { set ->
+            set.map { s ->
+                val parts = s.split("|")
+                Habito(parts[0], parts[1], parts[2])
+            }
+        }
     }
 
     suspend fun deleteHabitLocal(context: Context, habit: Habito) {
-        deleteHabitLocally(context, habit)
+        val serialized = "${habit.nombre}|${habit.categoria}|${habit.frecuencia}"
+        deleteHabitLocally(context, serialized)
     }
 }
 

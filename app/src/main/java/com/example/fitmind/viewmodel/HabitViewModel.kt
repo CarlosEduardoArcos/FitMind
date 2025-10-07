@@ -1,150 +1,46 @@
 package com.example.fitmind.viewmodel
 
 import android.app.Application
-import android.content.Context
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fitmind.core.AppConfig
-import com.example.fitmind.data.local.DataStoreManager
-import com.example.fitmind.data.local.getLocalHabitsFlow
-import com.example.fitmind.data.local.saveHabitLocally
-import com.example.fitmind.data.local.deleteHabitLocally
-import com.example.fitmind.data.mock.MockHabitRepository
-import com.example.fitmind.data.model.Habito
-import com.example.fitmind.data.model.Registro
-import com.example.fitmind.data.repository.HabitRepository
+import com.example.fitmind.data.local.*
+import com.example.fitmind.model.Habito
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for Habit CRUD and progress registration, exposing flows for UI.
- * Supports both Firebase and local DataStore modes.
- */
-class HabitViewModel(
-    private val app: Application,
-    private val firebaseRepository: HabitRepository = HabitRepository(),
-    private val mockRepository: MockHabitRepository = MockHabitRepository(),
-    private val dataStoreManager: DataStoreManager? = null
-) : AndroidViewModel(app) {
-
+class HabitViewModel(private val app: Application) : AndroidViewModel(app) {
     private val _habits = MutableStateFlow<List<Habito>>(emptyList())
-    val habits: StateFlow<List<Habito>> = _habits.asStateFlow()
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-    
-    private val _successfullyAdded = MutableStateFlow(false)
-    val successfullyAdded: StateFlow<Boolean> = _successfullyAdded.asStateFlow()
+    val habits: StateFlow<List<Habito>> = _habits
 
     init {
-        // Observar hábitos locales automáticamente
         viewModelScope.launch {
-            getLocalHabitsFlow(app.applicationContext).collect { habitsList ->
-                _habits.value = habitsList
-            }
+            getLocalHabitsFlow(app.applicationContext)
+                .map { set -> set.map { s -> deserializeHabito(s) } }
+                .collect { list -> _habits.value = list }
         }
     }
 
-    fun observeHabits(userId: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                if (AppConfig.isMockMode || AppConfig.isGuestMode) {
-                    // En modo mock o invitado, usar DataStore local
-                    dataStoreManager?.getLocalHabits()?.collect { habitsList ->
-                        _habits.value = habitsList
-                    }
-                } else {
-                    // En modo Firebase, usar el repositorio real
-                    firebaseRepository.obtenerHabitos(userId).collect { habitsList ->
-                        _habits.value = habitsList
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("FitMind", "Error al cargar hábitos: ${e.message}")
-                _errorMessage.value = e.message ?: "Error al cargar hábitos"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun createHabit(habito: Habito) {
-        _isLoading.value = true
-        _successfullyAdded.value = false
-        viewModelScope.launch {
-            try {
-                if (AppConfig.isMockMode || AppConfig.isGuestMode) {
-                    // En modo mock o invitado, guardar en DataStore local
-                    dataStoreManager?.saveHabitLocally(habito)
-                    _successfullyAdded.value = true
-                } else {
-                    // En modo Firebase, usar el repositorio real
-                    firebaseRepository.crearHabito(habito)
-                    _successfullyAdded.value = true
-                }
-                _errorMessage.value = null
-            } catch (e: Exception) {
-                Log.e("FitMind", "Error al crear hábito: ${e.message}")
-                _errorMessage.value = e.message ?: "Error al crear hábito"
-                _successfullyAdded.value = false
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    // Funciones para persistencia local
     fun addHabitLocal(hab: Habito) {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                saveHabitLocally(app.applicationContext, hab)
-                Log.d("FitMind", "Hábito agregado localmente: ${hab.nombre}")
-            } catch (e: Exception) {
-                Log.e("FitMind", "Error al agregar hábito local: ${e.message}")
-                _errorMessage.value = e.message ?: "Error al agregar hábito"
-            }
+            saveHabitLocally(app.applicationContext, serializeHabito(hab))
         }
     }
 
     fun deleteHabitLocal(hab: Habito) {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                deleteHabitLocally(app.applicationContext, hab)
-                Log.d("FitMind", "Hábito eliminado localmente: ${hab.nombre}")
-            } catch (e: Exception) {
-                Log.e("FitMind", "Error al eliminar hábito local: ${e.message}")
-                _errorMessage.value = e.message ?: "Error al eliminar hábito"
-            }
+            deleteHabitLocally(app.applicationContext, serializeHabito(hab))
         }
     }
 
-    fun addRecord(registro: Registro) {
-        _isLoading.value = true
-        viewModelScope.launch {
-            try {
-                if (AppConfig.isMockMode) {
-                    // En modo mock, simular agregar registro
-                    kotlinx.coroutines.delay(500)
-                } else {
-                    firebaseRepository.registrarProgreso(registro)
-                }
-                _errorMessage.value = null
-            } catch (e: Exception) {
-                Log.e("FitMind", "Error al agregar registro: ${e.message}")
-                _errorMessage.value = e.message ?: "Error al agregar registro"
-            } finally {
-                _isLoading.value = false
-            }
-        }
+    private fun serializeHabito(h: Habito) =
+        "${h.nombre}|${h.categoria}|${h.frecuencia}"
+
+    private fun deserializeHabito(s: String): Habito {
+        val parts = s.split("|")
+        return Habito(parts[0], parts[1], parts[2])
     }
 }
 
