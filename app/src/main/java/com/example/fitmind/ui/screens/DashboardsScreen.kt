@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -41,36 +42,43 @@ fun DashboardsScreen(navController: NavController, habitViewModel: HabitViewMode
         modifier = Modifier.fillMaxSize()
     ) {
         // Tab Bar superior con estilo oscuro (igual que barra inferior)
-        TabRow(
-            selectedTabIndex = selectedTabIndex,
-            containerColor = Color(0xFF1A1A1A), // Mismo fondo que barra inferior
-            contentColor = Color.White,
-            modifier = Modifier.height(56.dp), // Altura fija como barra inferior
-            indicator = { tabPositions ->
-                androidx.compose.material3.TabRowDefaults.SecondaryIndicator(
-                    modifier = Modifier,
-                    color = Color(0xFF06D6A0), // Mismo verde que barra inferior
-                    height = 4.dp // Grosor como barra inferior
-                )
-            }
+        Surface(
+            color = Color(0xFF1A1A1A), // Fondo oscuro sólido
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
         ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTabIndex == index,
-                    onClick = { selectedTabIndex = index },
-                    text = {
-                        Text(
-                            text = title,
-                            color = if (selectedTabIndex == index) {
-                                Color(0xFF06D6A0) // Verde turquesa para activo (mismo que barra inferior)
-                            } else {
-                                Color.White.copy(alpha = 0.7f) // Gris claro para inactivo
-                            },
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                )
+            TabRow(
+                selectedTabIndex = selectedTabIndex,
+                containerColor = Color(0xFF1A1A1A), // Fondo oscuro explícito
+                contentColor = Color.White,
+                modifier = Modifier.fillMaxWidth(),
+                indicator = { tabPositions ->
+                    androidx.compose.material3.TabRowDefaults.SecondaryIndicator(
+                        modifier = Modifier,
+                        color = Color(0xFF06D6A0), // Mismo verde que barra inferior
+                        height = 4.dp // Grosor como barra inferior
+                    )
+                }
+            ) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTabIndex == index,
+                        onClick = { selectedTabIndex = index },
+                        text = {
+                            Text(
+                                text = title,
+                                color = if (selectedTabIndex == index) {
+                                    Color(0xFF06D6A0) // Verde turquesa para activo (mismo que iconos de barra inferior)
+                                } else {
+                                    Color.White.copy(alpha = 0.7f) // Blanco 70% para inactivo (mismo que iconos de barra inferior)
+                                },
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    )
+                }
             }
         }
 
