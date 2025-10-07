@@ -1,6 +1,6 @@
 package com.example.fitmind.data.repository
 
-import com.example.fitmind.data.model.Habito
+import com.example.fitmind.model.Habito
 import com.example.fitmind.data.model.Notificacion
 import com.example.fitmind.data.model.Registro
 import com.example.fitmind.data.model.Usuario

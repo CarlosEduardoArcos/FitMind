@@ -4,7 +4,7 @@ import android.content.Context
 import com.example.fitmind.data.local.saveHabitLocally
 import com.example.fitmind.data.local.deleteHabitLocally
 import com.example.fitmind.data.local.getLocalHabitsFlow
-import com.example.fitmind.data.model.Habito
+import com.example.fitmind.model.Habito
 import com.example.fitmind.data.model.Registro
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -26,7 +26,7 @@ class HabitRepository(
 
     // Funciones para persistencia local con DataStore
     suspend fun saveHabitLocal(context: Context, habit: Habito) {
-        val serialized = "${habit.nombre}|${habit.categoria}|${habit.frecuencia}"
+        val serialized = "${habit.id}|${habit.nombre}|${habit.categoria}|${habit.frecuencia}|${habit.completado}"
         saveHabitLocally(context, serialized)
     }
 
@@ -34,13 +34,19 @@ class HabitRepository(
         return getLocalHabitsFlow(context).map { set ->
             set.map { s ->
                 val parts = s.split("|")
-                Habito(parts[0], parts[1], parts[2])
+                if (parts.size >= 5) {
+                    Habito(parts[0], parts[1], parts[2], parts[3], parts[4].toBoolean())
+                } else if (parts.size >= 4) {
+                    Habito("", parts[0], parts[1], parts[2], parts[3].toBoolean())
+                } else {
+                    Habito("", parts[0], parts[1], parts[2], false)
+                }
             }
         }
     }
 
     suspend fun deleteHabitLocal(context: Context, habit: Habito) {
-        val serialized = "${habit.nombre}|${habit.categoria}|${habit.frecuencia}"
+        val serialized = "${habit.id}|${habit.nombre}|${habit.categoria}|${habit.frecuencia}|${habit.completado}"
         deleteHabitLocally(context, serialized)
     }
 }

@@ -35,12 +35,26 @@ class HabitViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun toggleComplete(hab: Habito) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val updated = hab.copy(completado = !hab.completado)
+            deleteHabitLocally(app.applicationContext, serializeHabito(hab))
+            saveHabitLocally(app.applicationContext, serializeHabito(updated))
+        }
+    }
+
     private fun serializeHabito(h: Habito) =
-        "${h.nombre}|${h.categoria}|${h.frecuencia}"
+        "${h.id}|${h.nombre}|${h.categoria}|${h.frecuencia}|${h.completado}"
 
     private fun deserializeHabito(s: String): Habito {
         val parts = s.split("|")
-        return Habito(parts[0], parts[1], parts[2])
+        return if (parts.size >= 5) {
+            Habito(parts[0], parts[1], parts[2], parts[3], parts[4].toBoolean())
+        } else if (parts.size >= 4) {
+            Habito("", parts[0], parts[1], parts[2], parts[3].toBoolean())
+        } else {
+            Habito("", parts[0], parts[1], parts[2], false)
+        }
     }
 }
 

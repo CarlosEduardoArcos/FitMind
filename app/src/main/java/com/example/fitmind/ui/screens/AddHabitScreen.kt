@@ -43,7 +43,7 @@ fun AddHabitScreen(navController: NavController, habitViewModel: HabitViewModel)
         Button(
             onClick = {
                 if (nombre.isNotBlank() && categoria.isNotBlank() && frecuencia.isNotBlank()) {
-                    val nuevo = Habito(nombre, categoria, frecuencia)
+                    val nuevo = Habito("", nombre, categoria, frecuencia)
                     habitViewModel.addHabitLocal(nuevo)
                     Toast.makeText(context, "🏋️‍♀️ Hábito agregado", Toast.LENGTH_SHORT).show()
                     navController.navigate("home") {
