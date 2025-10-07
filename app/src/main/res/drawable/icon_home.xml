@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="homeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3A86FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2B6CB0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- House structure -->
+  <path d="M64 20 L20 50 L20 100 L108 100 L108 50 Z" 
+        fill="url(#homeGradient)" 
+        stroke="none"/>
+  
+  <!-- Roof -->
+  <path d="M64 20 L20 50 L64 40 L108 50 Z" 
+        fill="#2B6CB0" 
+        stroke="none"/>
+  
+  <!-- Door -->
+  <rect x="54" y="70" width="20" height="30" 
+        fill="#FFFFFF" 
+        rx="2"/>
+  
+  <!-- Door handle -->
+  <circle cx="68" cy="85" r="2" fill="#3A86FF"/>
+  
+  <!-- Windows -->
+  <rect x="30" y="60" width="16" height="16" 
+        fill="#FFFFFF" 
+        rx="2"/>
+  <rect x="82" y="60" width="16" height="16" 
+        fill="#FFFFFF" 
+        rx="2"/>
+  
+  <!-- Window frames -->
+  <line x1="38" y1="60" x2="38" y2="76" stroke="#3A86FF" stroke-width="1"/>
+  <line x1="30" y1="68" x2="46" y2="68" stroke="#3A86FF" stroke-width="1"/>
+  <line x1="90" y1="60" x2="90" y2="76" stroke="#3A86FF" stroke-width="1"/>
+  <line x1="82" y1="68" x2="98" y2="68" stroke="#3A86FF" stroke-width="1"/>
+  
+  <!-- Foundation -->
+  <rect x="15" y="100" width="98" height="8" 
+        fill="#2D3748" 
+        rx="2"/>
+</svg>

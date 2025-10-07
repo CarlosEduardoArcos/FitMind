@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="splashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3A86FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06D6A0;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0.7" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="120" fill="url(#splashGradient)"/>
+  
+  <!-- Main icon container -->
+  <g transform="translate(40, 40)">
+    <!-- Brain/Head silhouette -->
+    <path d="M60 30 C60 15, 75 10, 90 15 C105 10, 120 15, 120 30 C120 45, 110 60, 90 65 C70 60, 60 45, 60 30 Z" 
+          fill="url(#iconGradient)" 
+          stroke="none"/>
+    
+    <!-- Brain waves/activity lines -->
+    <g stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.9">
+      <path d="M70 40 Q75 35, 80 40 Q85 45, 90 40 Q95 35, 100 40 Q105 45, 110 40"/>
+      <path d="M70 50 Q75 45, 80 50 Q85 55, 90 50 Q95 45, 100 50 Q105 55, 110 50"/>
+      <path d="M70 60 Q75 55, 80 60 Q85 65, 90 60 Q95 55, 100 60 Q105 65, 110 60"/>
+    </g>
+    
+    <!-- Heart rate line -->
+    <g stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.9">
+      <path d="M50 90 L60 80 L70 100 L80 70 L90 110 L100 60 L110 90 L120 80"/>
+    </g>
+    
+    <!-- Fitness elements - dumbbell -->
+    <g fill="#FFFFFF" opacity="0.8">
+      <rect x="50" y="100" width="4" height="10" rx="2"/>
+      <rect x="116" y="100" width="4" height="10" rx="2"/>
+      <rect x="54" y="102.5" width="58" height="5" rx="2.5"/>
+    </g>
+  </g>
+  
+  <!-- Subtle pulse animation effect -->
+  <circle cx="128" cy="128" r="100" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.3">
+    <animate attributeName="r" values="100;120;100" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>

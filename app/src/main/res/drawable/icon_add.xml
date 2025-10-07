@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="addGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06D6A0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="shadowGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#06D6A0;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:#06D6A0;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Shadow -->
+  <circle cx="64" cy="70" r="50" fill="url(#shadowGradient)"/>
+  
+  <!-- Main circular button -->
+  <circle cx="64" cy="64" r="40" 
+          fill="url(#addGradient)" 
+          stroke="none"/>
+  
+  <!-- Plus sign -->
+  <g stroke="#FFFFFF" stroke-width="6" stroke-linecap="round">
+    <line x1="64" y1="44" x2="64" y2="84"/>
+    <line x1="44" y1="64" x2="84" y2="64"/>
+  </g>
+  
+  <!-- Inner highlight -->
+  <circle cx="64" cy="64" r="35" 
+          fill="none" 
+          stroke="#FFFFFF" 
+          stroke-width="2" 
+          opacity="0.3"/>
+  
+  <!-- Floating particles effect -->
+  <circle cx="30" cy="30" r="2" fill="#06D6A0" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="98" cy="40" r="1.5" fill="#06D6A0" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="90" cy="90" r="1" fill="#06D6A0" opacity="0.5">
+    <animate attributeName="opacity" values="0.5;0.1;0.5" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
+</svg>
