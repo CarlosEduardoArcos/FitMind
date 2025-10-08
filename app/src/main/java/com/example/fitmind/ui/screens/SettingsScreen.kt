@@ -3,7 +3,9 @@ package com.example.fitmind.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,9 +42,11 @@ fun SettingsScreen(
             .padding(16.dp)
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "Configuración",
@@ -209,7 +213,9 @@ fun SettingsScreen(
                                popUpTo("settings") { inclusive = true }
                            }
                        },
-                       modifier = Modifier.fillMaxWidth(),
+                       modifier = Modifier
+                           .fillMaxWidth()
+                           .padding(bottom = 16.dp), // Padding extra para asegurar visibilidad
                        colors = ButtonDefaults.buttonColors(
                            containerColor = Color.Red.copy(alpha = 0.8f),
                            contentColor = Color.White
