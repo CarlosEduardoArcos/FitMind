@@ -1,5 +1,6 @@
 package com.example.fitmind.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,13 +10,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.fitmind.viewmodel.AuthViewModel
 
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel = viewModel()
+) {
+    val context = LocalContext.current
     val gradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF3A86FF), Color(0xFF06D6A0)),
         startY = 0f,
@@ -177,20 +185,39 @@ fun SettingsScreen(navController: NavController) {
                 }
             }
 
-            // Sección de Información de la App
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
-                elevation = CardDefaults.cardElevation(6.dp),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("ℹ️ Información de la App", fontWeight = FontWeight.Bold, color = Color(0xFF3A86FF))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Versión: 1.0.0", color = Color.Black)
-                    Text("Desarrollado con Jetpack Compose y Firebase", color = Color.Black)
-                }
-            }
+                   // Sección de Información de la App
+                   Card(
+                       colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
+                       elevation = CardDefaults.cardElevation(6.dp),
+                       shape = RoundedCornerShape(16.dp),
+                       modifier = Modifier.fillMaxWidth()
+                   ) {
+                       Column(modifier = Modifier.padding(16.dp)) {
+                           Text("ℹ️ Información de la App", fontWeight = FontWeight.Bold, color = Color(0xFF3A86FF))
+                           Spacer(modifier = Modifier.height(8.dp))
+                           Text("Versión: 1.0.0", color = Color.Black)
+                           Text("Desarrollado con Jetpack Compose y Firebase", color = Color.Black)
+                       }
+                   }
+
+                   // Botón de Logout
+                   Button(
+                       onClick = {
+                           authViewModel.logout()
+                           Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                           navController.navigate("login") {
+                               popUpTo("settings") { inclusive = true }
+                           }
+                       },
+                       modifier = Modifier.fillMaxWidth(),
+                       colors = ButtonDefaults.buttonColors(
+                           containerColor = Color.Red.copy(alpha = 0.8f),
+                           contentColor = Color.White
+                       ),
+                       shape = RoundedCornerShape(12.dp)
+                   ) {
+                       Text("🚪 Cerrar Sesión", fontWeight = FontWeight.Bold)
+                   }
         }
     }
 }

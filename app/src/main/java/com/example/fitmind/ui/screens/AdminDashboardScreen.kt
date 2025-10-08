@@ -19,11 +19,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.fitmind.viewmodel.AdminViewModel
+import com.example.fitmind.viewmodel.AuthViewModel
 
 @Composable
 fun AdminDashboardScreen(
     navController: NavController,
-    adminViewModel: AdminViewModel = viewModel()
+    adminViewModel: AdminViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val users by adminViewModel.users.collectAsState()
@@ -65,21 +67,47 @@ fun AdminDashboardScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Título principal
-            Text(
-                text = "Panel de Administración 👑",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Spacer(Modifier.height(8.dp))
-            
-            Text(
-                text = "Gestión de usuarios y hábitos",
-                color = Color.White.copy(alpha = 0.8f),
-                fontSize = 16.sp
-            )
+            // Header con título y botón logout
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Panel de Administración 👑",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Spacer(Modifier.height(4.dp))
+                    
+                    Text(
+                        text = "Gestión de usuarios y hábitos",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 16.sp
+                    )
+                }
+                
+                // Botón de logout
+                Button(
+                    onClick = {
+                        authViewModel.logout()
+                        Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                        navController.navigate("login") {
+                            popUpTo("admin") { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red.copy(alpha = 0.8f),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("🚪 Salir", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
             
             Spacer(Modifier.height(24.dp))
 

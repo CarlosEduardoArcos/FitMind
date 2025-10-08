@@ -56,11 +56,11 @@ fun AppNavigation(
                 composable("splash") { SplashScreen(navController) }
                 composable("login") { LoginScreen(navController, darkTheme, onToggleTheme, authViewModel) }
                 composable("register") { RegisterScreen(navController, authViewModel) }
-                composable("admin") { AdminDashboardScreen(navController, viewModel<AdminViewModel>()) }
+                composable("admin") { AdminDashboardScreen(navController, viewModel<AdminViewModel>(), authViewModel) }
                 composable("home") { HomeScreen(navController, viewModel<HabitViewModel>()) }
                 composable("addHabit") { AddHabitScreen(navController, viewModel<HabitViewModel>()) }
                 composable("dashboards") { DashboardsScreen(navController, viewModel<HabitViewModel>()) }
-                composable("settings") { SettingsScreen(navController) }
+                composable("settings") { SettingsScreen(navController, authViewModel) }
             }
         }
     }
