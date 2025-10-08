@@ -151,12 +151,14 @@ fun RegisterScreen(
                 onClick = {
                     if (nombre.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
                         Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                    } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        Toast.makeText(context, "Formato de email inválido", Toast.LENGTH_SHORT).show()
                     } else if (password != confirmPassword) {
                         Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
                     } else if (password.length < 6) {
                         Toast.makeText(context, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
                     } else {
-                        authViewModel.register(nombre, email, password) { success, message ->
+                        authViewModel.register(nombre.trim(), email.trim(), password) { success, message ->
                             if (!success) {
                                 Toast.makeText(context, "Error: ${message ?: "No se pudo crear la cuenta"}", Toast.LENGTH_LONG).show()
                             }

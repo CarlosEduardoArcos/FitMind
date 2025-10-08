@@ -133,16 +133,18 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    if (email.isNotBlank() && password.isNotBlank()) {
-                        authViewModel.login(email, password) { success, message ->
+                    if (email.isBlank() || password.isBlank()) {
+                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+                    } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        Toast.makeText(context, "Formato de email inválido", Toast.LENGTH_SHORT).show()
+                    } else {
+                        authViewModel.login(email.trim(), password) { success, message ->
                             if (success) {
                                 Toast.makeText(context, "Iniciando sesión...", Toast.LENGTH_SHORT).show()
                             } else {
                                 Toast.makeText(context, "Error: ${message ?: "Credenciales incorrectas"}", Toast.LENGTH_LONG).show()
                             }
                         }
-                    } else {
-                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),

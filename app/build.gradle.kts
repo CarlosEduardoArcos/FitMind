@@ -35,7 +35,7 @@ android {
 
 dependencies {
     // 🔹 Firebase BoM (maneja versiones automáticamente)
-    implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
+    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
 
     // 🔸 SDKs de Firebase que usarás
     implementation("com.google.firebase:firebase-auth-ktx")
