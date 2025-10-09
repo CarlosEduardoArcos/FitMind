@@ -1,7 +1,7 @@
 package com.example.fitmind.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fitmind.data.local.getLocalHabitsFlow
 import com.example.fitmind.data.model.ProgressMetrics
@@ -17,7 +17,8 @@ import kotlin.random.Random
  * ViewModel para gestionar las métricas de progreso del usuario
  * Calcula estadísticas dinámicas basadas en los hábitos registrados
  */
-class ProgressViewModel(private val app: Application) : AndroidViewModel(app) {
+class ProgressViewModel : ViewModel() {
+    private var context: Context? = null
     
     private val _progressMetrics = MutableStateFlow(ProgressMetrics())
     val progressMetrics: StateFlow<ProgressMetrics> = _progressMetrics.asStateFlow()
@@ -25,7 +26,8 @@ class ProgressViewModel(private val app: Application) : AndroidViewModel(app) {
     private val _hasData = MutableStateFlow(false)
     val hasData: StateFlow<Boolean> = _hasData.asStateFlow()
     
-    init {
+    fun initializeContext(context: Context) {
+        this.context = context
         observeHabitsAndCalculateMetrics()
     }
     
@@ -33,9 +35,10 @@ class ProgressViewModel(private val app: Application) : AndroidViewModel(app) {
      * Observa los hábitos locales y calcula las métricas automáticamente
      */
     private fun observeHabitsAndCalculateMetrics() {
+        val ctx = context ?: return
         viewModelScope.launch {
             try {
-                getLocalHabitsFlow(app.applicationContext)
+                getLocalHabitsFlow(ctx)
                     .collect { habitsSet ->
                         val habitsList = habitsSet.map { deserializeHabito(it) }
                         calculateMetrics(habitsList)

@@ -40,8 +40,12 @@ fun AppNavigation(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     
-    // OPT: Crear AuthViewModel de forma segura
+    // OPT: Crear ViewModels compartidos para evitar múltiples instancias
     val authViewModel: AuthViewModel = viewModel()
+    val habitViewModel: HabitViewModel = viewModel()
+    val progressViewModel: ProgressViewModel = viewModel()
+    val notificationViewModel: NotificationViewModel = viewModel()
+    
     val userRole by authViewModel.userRole.collectAsState()
     val isAdmin = userRole == "admin"
 
@@ -63,21 +67,21 @@ fun AppNavigation(
                 composable("login") { LoginScreen(navController, darkTheme, onToggleTheme, authViewModel) }
                 composable("register") { RegisterScreen(navController, authViewModel) }
                 composable("admin") { AdminDashboardScreen(navController, viewModel<AdminViewModel>(), authViewModel) }
-                composable("home") { HomeScreen(navController, viewModel<HabitViewModel>()) }
-                composable("addHabit") { AddHabitScreen(navController, viewModel<HabitViewModel>()) }
+                composable("home") { HomeScreen(navController, habitViewModel) }
+                composable("addHabit") { AddHabitScreen(navController, habitViewModel) }
                 composable("dashboards") { 
                     DashboardsScreen(
                         navController, 
-                        viewModel<HabitViewModel>(),
-                        viewModel<ProgressViewModel>()
+                        habitViewModel,
+                        progressViewModel
                     ) 
                 }
                 composable("settings") {
                     SettingsScreen(
                         navController,
                         authViewModel,
-                        viewModel<NotificationViewModel>(),
-                        viewModel<HabitViewModel>()
+                        notificationViewModel,
+                        habitViewModel
                     )
                 }
             }

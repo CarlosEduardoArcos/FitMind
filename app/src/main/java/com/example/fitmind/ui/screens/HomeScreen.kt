@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
 import com.example.fitmind.model.Habito
 import com.example.fitmind.ui.utils.InteractionFeedback
 import com.example.fitmind.ui.utils.rememberInteractionFeedback
@@ -56,6 +58,13 @@ import com.example.fitmind.viewmodel.HabitViewModel
 
 @Composable
 fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
+    val context = LocalContext.current
+    
+    // Inicializar ViewModel con contexto
+    LaunchedEffect(Unit) {
+        habitViewModel.initializeContext(context)
+    }
+    
     // OPT: Manejo seguro de estado sin try-catch
     val habits by habitViewModel.habits.collectAsState()
     var showDialog by remember { mutableStateOf(false) }

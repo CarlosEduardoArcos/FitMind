@@ -1,7 +1,7 @@
 package com.example.fitmind.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fitmind.data.local.*
 import com.example.fitmind.model.Habito
@@ -11,15 +11,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class HabitViewModel(private val app: Application) : AndroidViewModel(app) {
+class HabitViewModel : ViewModel() {
+    private var context: Context? = null
     private val _habits = MutableStateFlow<List<Habito>>(emptyList())
     val habits: StateFlow<List<Habito>> = _habits
 
-    init {
-        // OPT: Inicialización segura con manejo de errores
+    fun initializeContext(context: Context) {
+        this.context = context
+        loadHabits()
+    }
+    
+    private fun loadHabits() {
+        val ctx = context ?: return
         viewModelScope.launch {
             try {
-                getLocalHabitsFlow(app.applicationContext)
+                getLocalHabitsFlow(ctx)
                     .map { set -> set.map { s -> deserializeHabito(s) } }
                     .collect { list -> _habits.value = list }
             } catch (e: Exception) {
@@ -30,9 +36,10 @@ class HabitViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     fun addHabitLocal(hab: Habito) {
+        val ctx = context ?: return
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                saveHabitLocally(app.applicationContext, serializeHabito(hab))
+                saveHabitLocally(ctx, serializeHabito(hab))
             } catch (e: Exception) {
                 // Si hay error al guardar, no hacer nada
                 // El error se manejará silenciosamente
@@ -41,9 +48,10 @@ class HabitViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     fun deleteHabitLocal(hab: Habito) {
+        val ctx = context ?: return
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                deleteHabitLocally(app.applicationContext, serializeHabito(hab))
+                deleteHabitLocally(ctx, serializeHabito(hab))
             } catch (e: Exception) {
                 // Si hay error al eliminar, no hacer nada
                 // El error se manejará silenciosamente
@@ -52,11 +60,12 @@ class HabitViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     fun toggleComplete(hab: Habito) {
+        val ctx = context ?: return
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val updated = hab.copy(completado = !hab.completado)
-                deleteHabitLocally(app.applicationContext, serializeHabito(hab))
-                saveHabitLocally(app.applicationContext, serializeHabito(updated))
+                deleteHabitLocally(ctx, serializeHabito(hab))
+                saveHabitLocally(ctx, serializeHabito(updated))
             } catch (e: Exception) {
                 // Si hay error al actualizar, no hacer nada
                 // El error se manejará silenciosamente

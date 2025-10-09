@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
 import com.example.fitmind.ui.components.CircularProgressIndicator
 import com.example.fitmind.ui.components.MetricCardWithCircularProgress
 import com.example.fitmind.viewmodel.HabitViewModel
@@ -49,8 +51,15 @@ import com.example.fitmind.viewmodel.ProgressViewModel
 fun DashboardsScreen(
     navController: NavController, 
     habitViewModel: HabitViewModel,
-    progressViewModel: ProgressViewModel = viewModel()
+    progressViewModel: ProgressViewModel
 ) {
+    val context = LocalContext.current
+    
+    // Inicializar ViewModels con contexto
+    LaunchedEffect(Unit) {
+        progressViewModel.initializeContext(context)
+    }
+    
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("Gráficos", "Estadísticas")
     
