@@ -56,7 +56,12 @@ import com.example.fitmind.viewmodel.HabitViewModel
 
 @Composable
 fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
-    val habits by habitViewModel.habits.collectAsState()
+    // OPT: Manejo seguro de estado con try-catch
+    val habits by try {
+        habitViewModel.habits.collectAsState()
+    } catch (e: Exception) {
+        remember { mutableStateOf(emptyList<Habito>()) }
+    }
     var showDialog by remember { mutableStateOf(false) }
     
     // Sistema de feedback interactivo

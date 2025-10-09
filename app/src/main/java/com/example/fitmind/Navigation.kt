@@ -40,15 +40,9 @@ fun AppNavigation(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     
-    // OPT: Crear AuthViewModel de forma lazy para evitar crash
+    // OPT: Crear AuthViewModel de forma segura
     val authViewModel: AuthViewModel = viewModel()
-    val userRole by remember {
-        try {
-            authViewModel.userRole.collectAsState()
-        } catch (e: Exception) {
-            mutableStateOf(null)
-        }
-    }
+    val userRole by authViewModel.userRole.collectAsState()
     val isAdmin = userRole == "admin"
 
     val showBottomBar = currentRoute !in listOf("splash", "login", "register")
