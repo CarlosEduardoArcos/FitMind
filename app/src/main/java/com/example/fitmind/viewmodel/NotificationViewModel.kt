@@ -132,6 +132,8 @@ class NotificationViewModel(
                 kotlinx.coroutines.delay(3000)
                 _successMessage.value = null
                 
+            } catch (e: SecurityException) {
+                _errorMessage.value = e.message ?: "Permisos insuficientes para programar notificaciones"
             } catch (e: Exception) {
                 _errorMessage.value = "Error al programar notificación: ${e.message}"
             }
@@ -180,6 +182,8 @@ class NotificationViewModel(
                 kotlinx.coroutines.delay(3000)
                 _successMessage.value = null
                 
+            } catch (e: SecurityException) {
+                _errorMessage.value = e.message ?: "Permisos insuficientes para programar notificaciones de prueba"
             } catch (e: Exception) {
                 _errorMessage.value = "Error al programar notificación de prueba: ${e.message}"
             }

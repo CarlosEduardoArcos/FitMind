@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import java.util.*
 
 /**
@@ -13,6 +14,17 @@ import java.util.*
 class NotificationScheduler(private val context: Context) {
     
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    
+    /**
+     * Verifica si la app tiene permisos para programar alarmas exactas
+     */
+    private fun canScheduleExactAlarms(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true // Para versiones anteriores a Android 12, no se requiere verificación
+        }
+    }
     
     /**
      * Programa una notificación para un hábito específico
@@ -29,6 +41,10 @@ class NotificationScheduler(private val context: Context) {
         minute: Int,
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
+        // Verificar permisos antes de programar
+        if (!canScheduleExactAlarms()) {
+            throw SecurityException("La aplicación no tiene permisos para programar alarmas exactas. Por favor, habilita los permisos en Configuración > Aplicaciones > FitMind > Permisos")
+        }
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -77,6 +93,10 @@ class NotificationScheduler(private val context: Context) {
         minute: Int,
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
+        // Verificar permisos antes de programar
+        if (!canScheduleExactAlarms()) {
+            throw SecurityException("La aplicación no tiene permisos para programar alarmas exactas. Por favor, habilita los permisos en Configuración > Aplicaciones > FitMind > Permisos")
+        }
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -148,6 +168,10 @@ class NotificationScheduler(private val context: Context) {
      * @param habitName Nombre del hábito para la notificación de prueba
      */
     fun scheduleTestNotification(habitName: String) {
+        // Verificar permisos antes de programar
+        if (!canScheduleExactAlarms()) {
+            throw SecurityException("La aplicación no tiene permisos para programar alarmas exactas. Por favor, habilita los permisos en Configuración > Aplicaciones > FitMind > Permisos")
+        }
         val testNotificationId = 9999 // ID fijo para notificaciones de prueba
         
         val intent = Intent(context, NotificationReceiver::class.java).apply {
