@@ -77,4 +77,8 @@ class AuthViewModel : ViewModel() {
     fun isUser(): Boolean {
         return _userRole.value == "usuario"
     }
+
+    fun getCurrentUserId(): String? {
+        return _currentUser.value?.uid
+    }
 }

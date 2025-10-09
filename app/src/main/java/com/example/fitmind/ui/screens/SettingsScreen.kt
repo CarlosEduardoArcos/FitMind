@@ -19,11 +19,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.fitmind.viewmodel.AuthViewModel
+import com.example.fitmind.viewmodel.NotificationViewModel
 
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = viewModel(),
+    notificationViewModel: NotificationViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val gradient = Brush.verticalGradient(
@@ -32,8 +34,20 @@ fun SettingsScreen(
         endY = Float.POSITIVE_INFINITY
     )
 
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    // Estados del ViewModel de notificaciones
+    val notificationsEnabled by notificationViewModel.enabled.collectAsState()
+    val scheduledTime by notificationViewModel.scheduledTime.collectAsState()
+    val message by notificationViewModel.message.collectAsState()
+    val habitName by notificationViewModel.habitName.collectAsState()
+    val isRecurring by notificationViewModel.isRecurring.collectAsState()
+    val errorMessage by notificationViewModel.errorMessage.collectAsState()
+    val successMessage by notificationViewModel.successMessage.collectAsState()
+    
+    // Estado local para el modo local
     var localModeEnabled by remember { mutableStateOf(true) }
+    
+    // Estado para mostrar/ocultar campos de notificación
+    var showNotificationFields by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -74,7 +88,7 @@ fun SettingsScreen(
                         Text("Activar recordatorios", color = Color.Black)
                         Switch(
                             checked = notificationsEnabled,
-                            onCheckedChange = { notificationsEnabled = it },
+                            onCheckedChange = { notificationViewModel.setEnabled(it) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.Black,
                                 checkedTrackColor = Color(0xFF06D6A0),
@@ -86,59 +100,147 @@ fun SettingsScreen(
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
-                    OutlinedTextField(
-                        value = "¡Es hora de completar tus hábitos!",
-                        onValueChange = { },
-                        label = { Text("Mensaje de recordatorio") },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = notificationsEnabled,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF06D6A0),
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                        )
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    OutlinedTextField(
-                        value = "09:00",
-                        onValueChange = { },
-                        label = { Text("Hora (HH:MM)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = notificationsEnabled,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF06D6A0),
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                        )
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
                     Button(
-                        onClick = { /* Programar recordatorio */ },
+                        onClick = { showNotificationFields = !showNotificationFields },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = notificationsEnabled,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF06D6A0),
+                            containerColor = if (showNotificationFields) Color(0xFF3A86FF) else Color(0xFF06D6A0),
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Programar Recordatorio")
+                        Text(if (showNotificationFields) "Ocultar Configuración" else "Configurar Recordatorio")
                     }
                     
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    OutlinedButton(
-                        onClick = { notificationsEnabled = false },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFF06D6A0)
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF06D6A0)),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Cancelar Recordatorios")
+                    if (showNotificationFields && notificationsEnabled) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        OutlinedTextField(
+                            value = habitName,
+                            onValueChange = { notificationViewModel.setHabitName(it) },
+                            label = { Text("Nombre del hábito") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF06D6A0),
+                                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                            )
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        OutlinedTextField(
+                            value = message,
+                            onValueChange = { notificationViewModel.setMessage(it) },
+                            label = { Text("Mensaje personalizado (opcional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF06D6A0),
+                                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                            )
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        OutlinedTextField(
+                            value = scheduledTime,
+                            onValueChange = { notificationViewModel.setScheduledTime(it) },
+                            label = { Text("Hora (HH:MM)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF06D6A0),
+                                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                            )
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Recordatorio diario", color = Color.Black)
+                            Switch(
+                                checked = isRecurring,
+                                onCheckedChange = { notificationViewModel.setIsRecurring(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.Black,
+                                    checkedTrackColor = Color(0xFF06D6A0),
+                                    uncheckedThumbColor = Color.Gray,
+                                    uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
+                                )
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Button(
+                            onClick = { 
+                                val userId = authViewModel.getCurrentUserId() ?: "local_user"
+                                notificationViewModel.scheduleNotification(context, userId)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF06D6A0),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(if (isRecurring) "Programar Recordatorio Diario" else "Programar Recordatorio")
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { notificationViewModel.scheduleTestNotification(context) },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color(0xFF3A86FF)
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3A86FF)),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("Prueba", fontSize = 12.sp)
+                            }
+                            
+                            OutlinedButton(
+                                onClick = { notificationViewModel.cancelNotifications(context) },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color.Red
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("Cancelar", fontSize = 12.sp)
+                            }
+                        }
+                        
+                        // Mostrar mensajes de error o éxito
+                        errorMessage?.let { error ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = error,
+                                color = Color.Red,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+                        
+                        successMessage?.let { success ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = success,
+                                color = Color(0xFF00C853),
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
                     }
                 }
             }

@@ -31,14 +31,18 @@ private val DarkColorScheme = darkColorScheme(
     onTertiary = Color.Black,
     tertiaryContainer = Color(0xFF8B2C00),
     onTertiaryContainer = Color(0xFFFFCCBC),
-    background = Color.Black, // Fondo negro puro
+    background = Color(0xFF121212), // Fondo oscuro Material 3
     onBackground = Color.White,
-    surface = Color(0xFF1A1A1A), // Superficie muy oscura
+    surface = Color(0xFF1E1E1E), // Superficie oscura Material 3
     onSurface = Color.White,
-    surfaceVariant = Color(0xFF2D2D2D),
+    surfaceVariant = Color(0xFF2C2C2C),
     onSurfaceVariant = Color(0xFFB0B0B0),
     outline = Color(0xFF06D6A0), // Verde neón para bordes
-    outlineVariant = Color(0xFF404040)
+    outlineVariant = Color(0xFF404040),
+    surfaceTint = Color(0xFF06D6A0),
+    inverseSurface = Color(0xFFF7F9FB),
+    inverseOnSurface = Color(0xFF2D3748),
+    inversePrimary = Color(0xFF00A86B)
 )
 
 private val LightColorScheme = lightColorScheme(

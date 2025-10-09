@@ -26,6 +26,8 @@ import com.example.fitmind.viewmodel.AdminViewModel
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.ChartViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
+import com.example.fitmind.viewmodel.NotificationViewModel
+import com.example.fitmind.viewmodel.ProgressViewModel
 
 @Composable
 fun AppNavigation(
@@ -59,8 +61,20 @@ fun AppNavigation(
                 composable("admin") { AdminDashboardScreen(navController, viewModel<AdminViewModel>(), authViewModel) }
                 composable("home") { HomeScreen(navController, viewModel<HabitViewModel>()) }
                 composable("addHabit") { AddHabitScreen(navController, viewModel<HabitViewModel>()) }
-                composable("dashboards") { DashboardsScreen(navController, viewModel<HabitViewModel>()) }
-                composable("settings") { SettingsScreen(navController, authViewModel) }
+                composable("dashboards") { 
+                    DashboardsScreen(
+                        navController, 
+                        viewModel<HabitViewModel>(),
+                        viewModel<ProgressViewModel>()
+                    ) 
+                }
+                composable("settings") { 
+                    SettingsScreen(
+                        navController, 
+                        authViewModel,
+                        viewModel<NotificationViewModel>()
+                    ) 
+                }
             }
         }
     }

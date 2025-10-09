@@ -203,7 +203,7 @@ fun HabitCard(
             Row {
                 // Botón completar
                 IconButton(
-                    onClick = { /* TODO: Implementar toggle de completado */ },
+                    onClick = { habitViewModel.toggleComplete(habit) },
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Icon(

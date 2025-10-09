@@ -45,9 +45,8 @@ fun BottomNavigationBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
-            .background(Color(0xFF1A1A1A))
             .padding(top = 6.dp),
-        containerColor = Color(0xFF1A1A1A)
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -55,7 +54,7 @@ fun BottomNavigationBar(
         items.forEach { item ->
             val isSelected = currentRoute == item.route
             val tint by animateColorAsState(
-                targetValue = if (isSelected) Color(0xFF06D6A0) else Color.White.copy(alpha = 0.7f)
+                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
             val scale by animateFloatAsState(targetValue = if (isSelected) 1.3f else 1f)
 
