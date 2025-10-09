@@ -152,13 +152,21 @@ class ProgressViewModel(private val app: Application) : AndroidViewModel(app) {
      * Deserializa un hábito desde string
      */
     private fun deserializeHabito(s: String): Habito {
-        val parts = s.split("|")
-        return if (parts.size >= 5) {
-            Habito(parts[0], parts[1], parts[2], parts[3], parts[4].toBoolean())
-        } else if (parts.size >= 4) {
-            Habito("", parts[0], parts[1], parts[2], parts[3].toBoolean())
-        } else {
-            Habito("", parts[0], parts[1], parts[2], false)
+        return try {
+            val parts = s.split("|")
+            if (parts.size >= 5) {
+                Habito(parts[0], parts[1], parts[2], parts[3], parts[4].toBoolean())
+            } else if (parts.size >= 4) {
+                Habito("", parts[0], parts[1], parts[2], parts[3].toBoolean())
+            } else if (parts.size >= 3) {
+                Habito("", parts[0], parts[1], parts[2], false)
+            } else {
+                // Si hay menos de 3 partes, crear hábito vacío
+                Habito("", "", "", "", false)
+            }
+        } catch (e: Exception) {
+            // Si hay error en deserialización, retornar hábito vacío
+            Habito("", "", "", "", false)
         }
     }
     

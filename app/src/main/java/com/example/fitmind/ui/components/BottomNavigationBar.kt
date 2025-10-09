@@ -66,16 +66,7 @@ fun BottomNavigationBar(
                 selected = isSelected,
                 onClick = {
                     if (currentRoute != item.route) {
-                        try {
-                            navController.navigate(item.route) {
-                                popUpTo("home") { inclusive = false }
-                                launchSingleTop = true
-                            }
-                            // Feedback después de navegación exitosa
-                            interactionFeedback.onNavigationClick()
-                        } catch (e: Exception) {
-                            // Si hay error en la navegación, no hacer feedback
-                        }
+                        navController.navigate(item.route)
                     }
                 },
                 icon = {

@@ -128,8 +128,12 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
 
         FloatingActionButton(
             onClick = { 
-                interactionFeedback.onHabitAdded()
-                navController.navigate("addHabit") 
+                try {
+                    interactionFeedback.onHabitAdded()
+                    navController.navigate("addHabit") 
+                } catch (e: Exception) {
+                    // Si hay error, no hacer nada
+                }
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)

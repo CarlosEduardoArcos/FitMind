@@ -93,12 +93,21 @@ fun AddHabitScreen(navController: NavController, habitViewModel: HabitViewModel)
 
                 Button(
                     onClick = {
-                        if (name.isNotBlank() && category.isNotBlank() && frequency.isNotBlank()) {
-                            val nuevo = Habito("", name, category, frequency)
-                            habitViewModel.addHabitLocal(nuevo)
-                            Toast.makeText(context, "🏋️‍♀️ Hábito agregado", Toast.LENGTH_SHORT).show()
-                            navController.navigate("home") {
-                                popUpTo("addHabit") { inclusive = true }
+                        try {
+                            if (name.isNotBlank() && category.isNotBlank() && frequency.isNotBlank()) {
+                                val nuevo = Habito("", name, category, frequency)
+                                habitViewModel.addHabitLocal(nuevo)
+                                Toast.makeText(context, "🏋️‍♀️ Hábito agregado", Toast.LENGTH_SHORT).show()
+                                navController.navigate("home") {
+                                    popUpTo("addHabit") { inclusive = true }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            // Si hay error, intentar navegación simple
+                            try {
+                                navController.navigate("home")
+                            } catch (navError: Exception) {
+                                // Si también falla la navegación simple, no hacer nada
                             }
                         }
                     },
