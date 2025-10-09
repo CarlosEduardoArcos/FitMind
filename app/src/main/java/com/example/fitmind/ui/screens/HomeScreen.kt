@@ -104,6 +104,7 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
                     items(habits) { habit ->
                         HabitCard(
                             habit = habit,
+                            onToggleComplete = { habitViewModel.toggleComplete(habit) },
                             onDelete = { habitViewModel.deleteHabitLocal(habit) }
                         )
                     }
@@ -143,6 +144,7 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
 @Composable
 fun HabitCard(
     habit: Habito,
+    onToggleComplete: (Habito) -> Unit,
     onDelete: (Habito) -> Unit
 ) {
     val animatedProgress by animateFloatAsState(
@@ -203,7 +205,7 @@ fun HabitCard(
             Row {
                 // Botón completar
                 IconButton(
-                    onClick = { habitViewModel.toggleComplete(habit) },
+                    onClick = { onToggleComplete(habit) },
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
                     Icon(

@@ -41,7 +41,7 @@ class NotificationViewModel(
     private val _isRecurring = MutableStateFlow(true)
     val isRecurring: StateFlow<Boolean> = _isRecurring.asStateFlow()
 
-    private val notificationScheduler = NotificationScheduler(repository as Context)
+    private var notificationScheduler: NotificationScheduler? = null
 
     fun setEnabled(value: Boolean) { _enabled.value = value }
 
@@ -57,6 +57,10 @@ class NotificationViewModel(
      * Programa una notificación para un hábito específico
      */
     fun scheduleNotification(context: Context, userId: String) {
+        // Inicializar el scheduler si no existe
+        if (notificationScheduler == null) {
+            notificationScheduler = NotificationScheduler(context)
+        }
         if (!_enabled.value) {
             _errorMessage.value = "Las notificaciones están deshabilitadas"
             return
@@ -92,7 +96,7 @@ class NotificationViewModel(
                 
                 // Programar notificación
                 if (_isRecurring.value) {
-                    notificationScheduler.scheduleRecurringNotification(
+                    notificationScheduler?.scheduleRecurringNotification(
                         _habitName.value,
                         finalMessage,
                         hour,
@@ -100,7 +104,7 @@ class NotificationViewModel(
                         notificationId
                     )
                 } else {
-                    notificationScheduler.scheduleNotification(
+                    notificationScheduler?.scheduleNotification(
                         _habitName.value,
                         finalMessage,
                         hour,
@@ -140,7 +144,10 @@ class NotificationViewModel(
     fun cancelNotifications(context: Context) {
         viewModelScope.launch {
             try {
-                notificationScheduler.cancelAllNotifications()
+                if (notificationScheduler == null) {
+                    notificationScheduler = NotificationScheduler(context)
+                }
+                notificationScheduler?.cancelAllNotifications()
                 _successMessage.value = "Todas las notificaciones han sido canceladas"
                 
                 // Limpiar mensaje de éxito después de 3 segundos
@@ -159,10 +166,13 @@ class NotificationViewModel(
     fun scheduleTestNotification(context: Context) {
         viewModelScope.launch {
             try {
+                if (notificationScheduler == null) {
+                    notificationScheduler = NotificationScheduler(context)
+                }
                 val habitName = if (_habitName.value.isBlank()) "tu hábito" else _habitName.value
                 val testMessage = "🔔 Notificación de prueba para $habitName"
                 
-                notificationScheduler.scheduleNotification(
+                notificationScheduler?.scheduleNotification(
                     habitName,
                     testMessage,
                     Calendar.getInstance().apply {
