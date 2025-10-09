@@ -15,12 +15,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // OPT: Inicializar Firebase de forma segura antes de cargar UI
+        // OPT: Firebase ya se inicializa en FitMindApplication, solo obtener instancia
         try {
-            FirebaseApp.initializeApp(this)
             FirebaseAuth.getInstance()
         } catch (e: Exception) {
-            // Firebase ya inicializado, continuar
+            // Si hay error, continuar sin Firebase
         }
 
         setContent {
