@@ -170,21 +170,11 @@ class NotificationViewModel(
                     notificationScheduler = NotificationScheduler(context)
                 }
                 val habitName = if (_habitName.value.isBlank()) "tu hábito" else _habitName.value
-                val testMessage = "🔔 Notificación de prueba para $habitName"
                 
-                notificationScheduler?.scheduleNotification(
-                    habitName,
-                    testMessage,
-                    Calendar.getInstance().apply {
-                        add(Calendar.SECOND, 5)
-                    }.get(Calendar.HOUR_OF_DAY),
-                    Calendar.getInstance().apply {
-                        add(Calendar.SECOND, 5)
-                    }.get(Calendar.MINUTE),
-                    System.currentTimeMillis().toInt()
-                )
+                // Usar el método específico para notificaciones de prueba
+                notificationScheduler?.scheduleTestNotification(habitName)
                 
-                _successMessage.value = "Notificación de prueba programada (5 segundos)"
+                _successMessage.value = "🔔 Notificación de prueba programada (aparecerá en 5 segundos)"
                 
                 // Limpiar mensaje de éxito después de 3 segundos
                 kotlinx.coroutines.delay(3000)

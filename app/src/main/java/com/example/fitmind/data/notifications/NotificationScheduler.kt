@@ -143,6 +143,39 @@ class NotificationScheduler(private val context: Context) {
     }
     
     /**
+     * Programa una notificación de prueba (5 segundos desde ahora)
+     * Útil para probar que las notificaciones funcionan correctamente
+     * @param habitName Nombre del hábito para la notificación de prueba
+     */
+    fun scheduleTestNotification(habitName: String) {
+        val testNotificationId = 9999 // ID fijo para notificaciones de prueba
+        
+        val intent = Intent(context, NotificationReceiver::class.java).apply {
+            putExtra(NotificationReceiver.EXTRA_HABIT_NAME, habitName)
+            putExtra(NotificationReceiver.EXTRA_MESSAGE, "🔔 Notificación de prueba para $habitName")
+            putExtra(NotificationReceiver.EXTRA_NOTIFICATION_ID, testNotificationId)
+        }
+        
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            testNotificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        // Programar para 5 segundos desde ahora
+        val testTime = Calendar.getInstance().apply {
+            add(Calendar.SECOND, 5)
+        }
+        
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            testTime.timeInMillis,
+            pendingIntent
+        )
+    }
+    
+    /**
      * Verifica si hay notificaciones programadas
      * @param notificationId ID de la notificación a verificar
      * @return true si hay una notificación programada

@@ -68,12 +68,13 @@ fun AppNavigation(
                         viewModel<ProgressViewModel>()
                     ) 
                 }
-                composable("settings") { 
+                composable("settings") {
                     SettingsScreen(
-                        navController, 
+                        navController,
                         authViewModel,
-                        viewModel<NotificationViewModel>()
-                    ) 
+                        viewModel<NotificationViewModel>(),
+                        viewModel<HabitViewModel>()
+                    )
                 }
             }
         }
