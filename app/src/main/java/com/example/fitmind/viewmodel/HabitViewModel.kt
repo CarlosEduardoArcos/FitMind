@@ -31,21 +31,36 @@ class HabitViewModel(private val app: Application) : AndroidViewModel(app) {
 
     fun addHabitLocal(hab: Habito) {
         viewModelScope.launch(Dispatchers.IO) {
-            saveHabitLocally(app.applicationContext, serializeHabito(hab))
+            try {
+                saveHabitLocally(app.applicationContext, serializeHabito(hab))
+            } catch (e: Exception) {
+                // Si hay error al guardar, no hacer nada
+                // El error se manejará silenciosamente
+            }
         }
     }
 
     fun deleteHabitLocal(hab: Habito) {
         viewModelScope.launch(Dispatchers.IO) {
-            deleteHabitLocally(app.applicationContext, serializeHabito(hab))
+            try {
+                deleteHabitLocally(app.applicationContext, serializeHabito(hab))
+            } catch (e: Exception) {
+                // Si hay error al eliminar, no hacer nada
+                // El error se manejará silenciosamente
+            }
         }
     }
 
     fun toggleComplete(hab: Habito) {
         viewModelScope.launch(Dispatchers.IO) {
-            val updated = hab.copy(completado = !hab.completado)
-            deleteHabitLocally(app.applicationContext, serializeHabito(hab))
-            saveHabitLocally(app.applicationContext, serializeHabito(updated))
+            try {
+                val updated = hab.copy(completado = !hab.completado)
+                deleteHabitLocally(app.applicationContext, serializeHabito(hab))
+                saveHabitLocally(app.applicationContext, serializeHabito(updated))
+            } catch (e: Exception) {
+                // Si hay error al actualizar, no hacer nada
+                // El error se manejará silenciosamente
+            }
         }
     }
 

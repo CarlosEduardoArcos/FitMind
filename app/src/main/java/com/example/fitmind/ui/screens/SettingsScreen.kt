@@ -424,7 +424,7 @@ fun NotificationSettingsCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Recordatorios Inteligentes",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium, // OPT: Reducido de titleLarge a titleMedium
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -700,7 +700,7 @@ fun TimeSelector(
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = selectedTime,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyLarge, // OPT: Reducido de titleMedium a bodyLarge
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.width(12.dp))

@@ -6,7 +6,11 @@ import com.google.firebase.FirebaseApp
 class FitMindApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // Initialize Firebase
-        FirebaseApp.initializeApp(this)
+        // OPT: Inicialización segura de Firebase
+        try {
+            FirebaseApp.initializeApp(this)
+        } catch (e: Exception) {
+            // Firebase ya inicializado o error, continuar
+        }
     }
 }

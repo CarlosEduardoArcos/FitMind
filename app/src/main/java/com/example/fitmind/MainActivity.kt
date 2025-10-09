@@ -15,12 +15,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // OPT: Firebase ya se inicializa en FitMindApplication, solo obtener instancia
-        try {
-            FirebaseAuth.getInstance()
-        } catch (e: Exception) {
-            // Si hay error, continuar sin Firebase
-        }
+        // OPT: Inicialización mínima y segura
+        // Firebase se inicializa automáticamente en FitMindApplication
 
         setContent {
             // OPT: Usar rememberSaveable para persistir tema
