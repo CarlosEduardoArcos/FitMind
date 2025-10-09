@@ -165,9 +165,14 @@ fun LoginScreen(
             }
 
             TextButton(onClick = {
-                Toast.makeText(context, "Entrando en modo invitado", Toast.LENGTH_SHORT).show()
-                navController.navigate("home") {
-                    popUpTo("login") { inclusive = true }
+                try {
+                    Toast.makeText(context, "Entrando en modo invitado", Toast.LENGTH_SHORT).show()
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                } catch (e: Exception) {
+                    // Si hay error, intentar navegación simple
+                    navController.navigate("home")
                 }
             }) {
                 Text("Entrar como invitado", color = Color.White)

@@ -16,10 +16,16 @@ class HabitViewModel(private val app: Application) : AndroidViewModel(app) {
     val habits: StateFlow<List<Habito>> = _habits
 
     init {
+        // OPT: Inicialización segura con manejo de errores
         viewModelScope.launch {
-            getLocalHabitsFlow(app.applicationContext)
-                .map { set -> set.map { s -> deserializeHabito(s) } }
-                .collect { list -> _habits.value = list }
+            try {
+                getLocalHabitsFlow(app.applicationContext)
+                    .map { set -> set.map { s -> deserializeHabito(s) } }
+                    .collect { list -> _habits.value = list }
+            } catch (e: Exception) {
+                // Si hay error, inicializar con lista vacía
+                _habits.value = emptyList()
+            }
         }
     }
 

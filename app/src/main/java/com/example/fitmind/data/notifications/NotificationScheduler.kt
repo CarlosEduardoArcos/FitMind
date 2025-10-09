@@ -41,10 +41,14 @@ class NotificationScheduler(private val context: Context) {
         minute: Int,
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
-        // Verificar permisos antes de programar
+        // OPT: Verificar permisos antes de programar
         if (!canScheduleExactAlarms()) {
             throw SecurityException("La aplicación no tiene permisos para programar alarmas exactas. Por favor, habilita los permisos en Configuración > Aplicaciones > FitMind > Permisos")
         }
+        
+        // OPT: Cancelar notificación previa si existe para evitar duplicados
+        cancelNotification(notificationId)
+        
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -93,10 +97,14 @@ class NotificationScheduler(private val context: Context) {
         minute: Int,
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
-        // Verificar permisos antes de programar
+        // OPT: Verificar permisos antes de programar
         if (!canScheduleExactAlarms()) {
             throw SecurityException("La aplicación no tiene permisos para programar alarmas exactas. Por favor, habilita los permisos en Configuración > Aplicaciones > FitMind > Permisos")
         }
+        
+        // OPT: Cancelar notificación recurrente previa si existe
+        cancelNotification(notificationId)
+        
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)

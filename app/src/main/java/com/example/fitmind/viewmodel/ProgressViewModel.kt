@@ -34,11 +34,25 @@ class ProgressViewModel(private val app: Application) : AndroidViewModel(app) {
      */
     private fun observeHabitsAndCalculateMetrics() {
         viewModelScope.launch {
-            getLocalHabitsFlow(app.applicationContext)
-                .collect { habitsSet ->
-                    val habitsList = habitsSet.map { deserializeHabito(it) }
-                    calculateMetrics(habitsList)
-                }
+            try {
+                getLocalHabitsFlow(app.applicationContext)
+                    .collect { habitsSet ->
+                        val habitsList = habitsSet.map { deserializeHabito(it) }
+                        calculateMetrics(habitsList)
+                    }
+            } catch (e: Exception) {
+                // Si hay error, inicializar con métricas vacías
+                _progressMetrics.value = ProgressMetrics(
+                    totalHabits = 0,
+                    completedHabits = 0,
+                    completionPercentage = 0f,
+                    steps = 0,
+                    calories = 0,
+                    kilometers = 0f, // OPT: Cambiar de Double a Float
+                    heartRate = 0
+                )
+                _hasData.value = false
+            }
         }
     }
     

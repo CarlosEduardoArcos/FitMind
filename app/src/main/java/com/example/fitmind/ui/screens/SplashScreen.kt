@@ -22,20 +22,20 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController) {
-    // Animación de rotación infinita para el logo
+    // OPT: Optimizar animación - reducir duración y usar easing más eficiente
     val infiniteTransition = rememberInfiniteTransition()
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4000, easing = LinearEasing),
+            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing), // OPT: Reducido de 4000ms a 2000ms
             repeatMode = RepeatMode.Restart
         )
     )
 
-    // Navegar al login después de 3 segundos
+    // OPT: Reducir tiempo de splash a 1.5 segundos para mejor UX
     LaunchedEffect(Unit) {
-        delay(3000)
+        delay(1500) // OPT: Reducido de 3000ms a 1500ms
         navController.navigate("login") {
             popUpTo("splash") { inclusive = true }
         }

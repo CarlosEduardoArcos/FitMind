@@ -11,14 +11,20 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //Inicializar Firebase antes de cargar la interfaz
-        FirebaseApp.initializeApp(this)
-        FirebaseAuth.getInstance()
+        // OPT: Inicializar Firebase de forma segura antes de cargar UI
+        try {
+            FirebaseApp.initializeApp(this)
+            FirebaseAuth.getInstance()
+        } catch (e: Exception) {
+            // Firebase ya inicializado, continuar
+        }
 
         setContent {
+            // OPT: Usar rememberSaveable para persistir tema
             var darkTheme by rememberSaveable { mutableStateOf(false) }
             val navController = rememberNavController()
 
@@ -31,4 +37,5 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    
 }

@@ -7,6 +7,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -37,8 +39,16 @@ fun AppNavigation(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    
+    // OPT: Crear AuthViewModel de forma lazy para evitar crash
     val authViewModel: AuthViewModel = viewModel()
-    val userRole by authViewModel.userRole.collectAsState()
+    val userRole by remember {
+        try {
+            authViewModel.userRole.collectAsState()
+        } catch (e: Exception) {
+            mutableStateOf(null)
+        }
+    }
     val isAdmin = userRole == "admin"
 
     val showBottomBar = currentRoute !in listOf("splash", "login", "register")

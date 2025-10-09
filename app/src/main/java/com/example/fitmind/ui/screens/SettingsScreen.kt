@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.fitmind.ui.utils.InteractionFeedback
+import com.example.fitmind.ui.utils.rememberInteractionFeedback
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.NotificationViewModel
@@ -64,12 +66,16 @@ fun SettingsScreen(
     
     // Snackbar para feedback visual
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Sistema de feedback interactivo
+    val interactionFeedback = rememberInteractionFeedback()
 
     // TimePicker Dialog
     if (showTimePicker) {
         TimePickerDialog(
             selectedTime = selectedTime,
             onTimeSelected = { time ->
+                interactionFeedback.onSelection()
                 selectedTime = time
                 showTimePicker = false
                 notificationViewModel.setScheduledTime(time)
@@ -124,12 +130,16 @@ fun SettingsScreen(
             // 🔔 Sección de Notificaciones Moderna
             NotificationSettingsCard(
                 notificationsEnabled = notificationsEnabled,
-                onToggleNotifications = { notificationViewModel.setEnabled(it) },
+                onToggleNotifications = { 
+                    interactionFeedback.onThemeToggle()
+                    notificationViewModel.setEnabled(it) 
+                },
                 showNotificationFields = showNotificationFields,
                 onToggleFields = { showNotificationFields = !showNotificationFields },
                 habits = habits,
                 selectedHabit = selectedHabit,
-                onHabitSelected = { 
+                onHabitSelected = {
+                    interactionFeedback.onSelection()
                     selectedHabit = it
                     notificationViewModel.setHabitName(it)
                 },
@@ -138,11 +148,18 @@ fun SettingsScreen(
                 isRecurring = isRecurring,
                 onToggleRecurring = { notificationViewModel.setIsRecurring(it) },
                 onScheduleNotification = {
+                    interactionFeedback.onNotificationScheduled()
                     val userId = authViewModel.getCurrentUserId() ?: "local_user"
                     notificationViewModel.scheduleNotification(context, userId)
                 },
-                onTestNotification = { notificationViewModel.scheduleTestNotification(context) },
-                onCancelNotifications = { notificationViewModel.cancelNotifications(context) }
+                onTestNotification = { 
+                    interactionFeedback.onNotificationScheduled()
+                    notificationViewModel.scheduleTestNotification(context) 
+                },
+                onCancelNotifications = { 
+                    interactionFeedback.onNotificationsCancelled()
+                    notificationViewModel.cancelNotifications(context) 
+                }
             )
 
             // Sección de Configuración de modo de la app
@@ -169,16 +186,19 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("Usar modo local (sin Firebase)", color = Color.Black)
-                        Switch(
-                            checked = localModeEnabled,
-                            onCheckedChange = { localModeEnabled = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.Black,
-                                checkedTrackColor = Color(0xFF06D6A0),
-                                uncheckedThumbColor = Color.Gray,
-                                uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
+                            Switch(
+                                checked = localModeEnabled,
+                                onCheckedChange = { 
+                                    interactionFeedback.onThemeToggle()
+                                    localModeEnabled = it 
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.Black,
+                                    checkedTrackColor = Color(0xFF06D6A0),
+                                    uncheckedThumbColor = Color.Gray,
+                                    uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
+                                )
                             )
-                        )
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))

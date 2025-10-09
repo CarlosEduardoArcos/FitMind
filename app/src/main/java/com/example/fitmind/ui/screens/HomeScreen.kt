@@ -46,12 +46,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.fitmind.model.Habito
+import com.example.fitmind.ui.utils.InteractionFeedback
+import com.example.fitmind.ui.utils.rememberInteractionFeedback
+import com.example.fitmind.ui.utils.rememberButtonScale
+import com.example.fitmind.ui.utils.rememberIconRotation
+import com.example.fitmind.ui.utils.animatedScale
+import com.example.fitmind.ui.utils.animatedRotation
 import com.example.fitmind.viewmodel.HabitViewModel
 
 @Composable
 fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
     val habits by habitViewModel.habits.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    
+    // Sistema de feedback interactivo
+    val interactionFeedback = rememberInteractionFeedback()
     var habitToDelete by remember { mutableStateOf<Habito?>(null) }
 
     val gradient = Brush.verticalGradient(
@@ -101,7 +110,11 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
                         .fillMaxSize()
                         .padding(bottom = 60.dp)
                 ) {
-                    items(habits) { habit ->
+                    // OPT: Usar key para optimizar recomposiciones
+                    items(
+                        items = habits,
+                        key = { habit -> habit.id ?: habit.nombre } // OPT: Key única para cada hábito
+                    ) { habit ->
                         HabitCard(
                             habit = habit,
                             onToggleComplete = { habitViewModel.toggleComplete(habit) },
@@ -113,7 +126,10 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
         }
 
         FloatingActionButton(
-            onClick = { navController.navigate("addHabit") },
+            onClick = { 
+                interactionFeedback.onHabitAdded()
+                navController.navigate("addHabit") 
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(24.dp),
@@ -147,10 +163,31 @@ fun HabitCard(
     onToggleComplete: (Habito) -> Unit,
     onDelete: (Habito) -> Unit
 ) {
+    // OPT: Usar remember para evitar recrear instancias
+    val interactionFeedback = rememberInteractionFeedback()
+    
+    // OPT: Optimizar animación de progreso - reducir duración
     val animatedProgress by animateFloatAsState(
         targetValue = if (habit.completado) 1f else 0f,
-        animationSpec = tween(durationMillis = 500)
+        animationSpec = tween(durationMillis = 300) // OPT: Reducido de 500ms a 300ms
     )
+    
+    // OPT: Usar remember para microanimaciones estables
+    val iconScale = rememberButtonScale(habit.completado)
+    val iconRotation = rememberIconRotation(habit.completado)
+    
+    // OPT: Usar remember para colores calculados
+    val cardColor = remember(habit.completado) {
+        if (habit.completado) {
+            Color(0xFF06D6A0).copy(alpha = 0.1f)
+        } else {
+            Color.White.copy(alpha = 0.95f)
+        }
+    }
+    
+    val textColor = remember(habit.completado) {
+        if (habit.completado) Color(0xFF06D6A0) else Color.Black
+    }
 
     Card(
         modifier = Modifier
@@ -159,11 +196,7 @@ fun HabitCard(
         elevation = CardDefaults.cardElevation(8.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (habit.completado) {
-                Color(0xFF06D6A0).copy(alpha = 0.1f)
-            } else {
-                Color.White.copy(alpha = 0.95f)
-            }
+            containerColor = cardColor // OPT: Usar color calculado con remember
         )
     ) {
         Row(
@@ -177,7 +210,7 @@ fun HabitCard(
                 Text(
                     text = habit.nombre,
                     fontWeight = FontWeight.Bold,
-                    color = if (habit.completado) Color(0xFF06D6A0) else Color.Black
+                    color = textColor // OPT: Usar color calculado con remember
                 )
                 Text(
                     text = habit.categoria,
@@ -203,10 +236,16 @@ fun HabitCard(
             }
             
             Row {
-                // Botón completar
+                // Botón completar con microanimación y feedback
                 IconButton(
-                    onClick = { onToggleComplete(habit) },
-                    modifier = Modifier.padding(end = 8.dp)
+                    onClick = { 
+                        interactionFeedback.onHabitCompleted()
+                        onToggleComplete(habit) 
+                    },
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .animatedScale(iconScale)
+                        .animatedRotation(iconRotation)
                 ) {
                     Icon(
                         imageVector = if (habit.completado) Icons.Default.CheckCircle else Icons.Default.Favorite,
@@ -215,8 +254,13 @@ fun HabitCard(
                     )
                 }
                 
-                // Botón eliminar
-                IconButton(onClick = { onDelete(habit) }) {
+                // Botón eliminar con feedback
+                IconButton(
+                    onClick = { 
+                        interactionFeedback.onHabitDeleted()
+                        onDelete(habit) 
+                    }
+                ) {
                     Icon(
                         Icons.Default.Delete,
                         contentDescription = "Eliminar hábito",

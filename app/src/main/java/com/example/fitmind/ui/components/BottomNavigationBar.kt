@@ -20,12 +20,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.fitmind.ui.utils.InteractionFeedback
+import com.example.fitmind.ui.utils.rememberInteractionFeedback
 
 @Composable
 fun BottomNavigationBar(
     navController: NavController,
     isAdmin: Boolean = false
 ) {
+    val interactionFeedback = rememberInteractionFeedback()
+    
     val baseItems = listOf(
         NavItem("home", Icons.Default.Home, "Inicio"),
         NavItem("dashboards", Icons.Default.Info, "Gráficos"),
@@ -62,9 +66,15 @@ fun BottomNavigationBar(
                 selected = isSelected,
                 onClick = {
                     if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            popUpTo("home") { inclusive = false }
-                            launchSingleTop = true
+                        try {
+                            navController.navigate(item.route) {
+                                popUpTo("home") { inclusive = false }
+                                launchSingleTop = true
+                            }
+                            // Feedback después de navegación exitosa
+                            interactionFeedback.onNavigationClick()
+                        } catch (e: Exception) {
+                            // Si hay error en la navegación, no hacer feedback
                         }
                     }
                 },

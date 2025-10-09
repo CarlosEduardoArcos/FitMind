@@ -11,9 +11,17 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
     private val repo = FirebaseRepository()
-    private val auth = FirebaseAuth.getInstance()
+    
+    // OPT: Inicialización segura de FirebaseAuth
+    private val auth by lazy { 
+        try {
+            FirebaseAuth.getInstance()
+        } catch (e: Exception) {
+            null
+        }
+    }
 
-    private val _currentUser = MutableStateFlow(auth.currentUser)
+    private val _currentUser = MutableStateFlow(auth?.currentUser)
     val currentUser: StateFlow<com.google.firebase.auth.FirebaseUser?> = _currentUser.asStateFlow()
 
     private val _userRole = MutableStateFlow<String?>(null)
@@ -23,8 +31,8 @@ class AuthViewModel : ViewModel() {
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     init {
-        // Escuchar cambios en el estado de autenticación
-        auth.addAuthStateListener { firebaseAuth ->
+        // OPT: Escuchar cambios en el estado de autenticación de forma segura
+        auth?.addAuthStateListener { firebaseAuth ->
             _currentUser.value = firebaseAuth.currentUser
             if (firebaseAuth.currentUser != null) {
                 loadUserRole(firebaseAuth.currentUser!!.uid)
@@ -35,29 +43,39 @@ class AuthViewModel : ViewModel() {
     }
 
     fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        if (auth == null) {
+            onResult(false, "Firebase no está inicializado")
+            return
+        }
+        
         _isLoading.value = true
         repo.loginUser(email, password) { success, msg ->
             _isLoading.value = false
-            if (success && auth.currentUser != null) {
-                loadUserRole(auth.currentUser!!.uid)
+            if (success && auth?.currentUser != null) {
+                loadUserRole(auth!!.currentUser!!.uid)
             }
             onResult(success, msg)
         }
     }
 
     fun register(nombre: String, email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        if (auth == null) {
+            onResult(false, "Firebase no está inicializado")
+            return
+        }
+        
         _isLoading.value = true
         repo.registerUser(nombre, email, password) { success, msg ->
             _isLoading.value = false
-            if (success && auth.currentUser != null) {
-                loadUserRole(auth.currentUser!!.uid)
+            if (success && auth?.currentUser != null) {
+                loadUserRole(auth!!.currentUser!!.uid)
             }
             onResult(success, msg)
         }
     }
 
     fun logout() {
-        auth.signOut()
+        auth?.signOut()
         _currentUser.value = null
         _userRole.value = null
     }
