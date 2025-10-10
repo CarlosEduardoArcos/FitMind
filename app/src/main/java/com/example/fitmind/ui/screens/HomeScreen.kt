@@ -65,7 +65,7 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
         habitViewModel.initializeContext(context)
     }
     
-    // OPT: Manejo seguro de estado sin try-catch
+    // OPT: Manejo seguro de estado
     val habits by habitViewModel.habits.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     

@@ -65,8 +65,12 @@ fun BottomNavigationBar(
             NavigationBarItem(
                 selected = isSelected,
                 onClick = {
-                    if (currentRoute != item.route) {
-                        navController.navigate(item.route)
+                    try {
+                        if (currentRoute != item.route) {
+                            navController.navigate(item.route)
+                        }
+                    } catch (e: Exception) {
+                        // Si hay error en la navegación, no hacer nada para evitar crashes
                     }
                 },
                 icon = {

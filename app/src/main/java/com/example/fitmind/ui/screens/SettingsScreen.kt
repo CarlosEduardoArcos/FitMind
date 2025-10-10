@@ -33,9 +33,9 @@ import java.util.*
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    authViewModel: AuthViewModel = viewModel(),
-    notificationViewModel: NotificationViewModel = viewModel(),
-    habitViewModel: HabitViewModel = viewModel()
+    authViewModel: AuthViewModel,
+    notificationViewModel: NotificationViewModel,
+    habitViewModel: HabitViewModel
 ) {
     val context = LocalContext.current
     val gradient = Brush.verticalGradient(

@@ -57,9 +57,14 @@ class NotificationViewModel(
      * Programa una notificación para un hábito específico
      */
     fun scheduleNotification(context: Context, userId: String) {
-        // Inicializar el scheduler si no existe
-        if (notificationScheduler == null) {
-            notificationScheduler = NotificationScheduler(context)
+        // Inicializar el scheduler si no existe de forma segura
+        try {
+            if (notificationScheduler == null) {
+                notificationScheduler = NotificationScheduler(context)
+            }
+        } catch (e: Exception) {
+            _errorMessage.value = "Error al inicializar el programador de notificaciones"
+            return
         }
         if (!_enabled.value) {
             _errorMessage.value = "Las notificaciones están deshabilitadas"
