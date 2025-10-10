@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.runtime.Composable
@@ -98,14 +99,66 @@ class InteractionFeedback(private val context: Context) {
     
     /**
      * Vibración personalizada para diferentes tipos de feedback
+     * Versión segura con validación completa de contexto y hardware
      */
     private fun vibrate(pattern: LongArray, amplitude: IntArray? = null) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val vibrationEffect = VibrationEffect.createWaveform(pattern, amplitude, -1)
-            vibrator.vibrate(vibrationEffect)
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(pattern, -1)
+        try {
+            // Validar que el patrón no sea nulo o vacío
+            if (pattern.isEmpty()) {
+                Log.w("InteractionFeedback", "Patrón de vibración vacío, usando patrón por defecto")
+                val defaultPattern = longArrayOf(0, 50)
+                performVibration(defaultPattern, amplitude)
+                return
+            }
+            
+            // Validar que el vibrator esté disponible
+            if (!vibrator.hasVibrator()) {
+                Log.w("InteractionFeedback", "El dispositivo no tiene vibrador o no está disponible")
+                return
+            }
+            
+            // Validar que todos los valores del patrón sean válidos
+            val validPattern = pattern.filter { it >= 0 }.toLongArray()
+            if (validPattern.isEmpty()) {
+                Log.w("InteractionFeedback", "Patrón de vibración inválido, usando patrón por defecto")
+                val defaultPattern = longArrayOf(0, 50)
+                performVibration(defaultPattern, amplitude)
+                return
+            }
+            
+            performVibration(validPattern, amplitude)
+            
+        } catch (e: Exception) {
+            Log.e("InteractionFeedback", "Error al ejecutar vibración: ${e.message}")
+        }
+    }
+    
+    /**
+     * Ejecuta la vibración de forma segura
+     */
+    private fun performVibration(pattern: LongArray, amplitude: IntArray?) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val vibrationEffect = VibrationEffect.createWaveform(pattern, amplitude, -1)
+                vibrator.vibrate(vibrationEffect)
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(pattern, -1)
+            }
+        } catch (e: Exception) {
+            Log.e("InteractionFeedback", "Error al ejecutar vibración con VibrationEffect: ${e.message}")
+            // Fallback: intentar vibración simple
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val simpleEffect = VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE)
+                    vibrator.vibrate(simpleEffect)
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(50)
+                }
+            } catch (fallbackError: Exception) {
+                Log.e("InteractionFeedback", "Error en fallback de vibración: ${fallbackError.message}")
+            }
         }
     }
     
@@ -196,6 +249,38 @@ class InteractionFeedback(private val context: Context) {
     fun onError() {
         // OPT: Vibración optimizada - más corta
         vibrate(longArrayOf(0, 100, 50, 100))
+    }
+    
+    /**
+     * Función pública segura para vibración desde cualquier lugar
+     * Úsala cuando necesites vibración segura fuera de los métodos específicos
+     */
+    fun vibrate(context: Context) {
+        try {
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+                vibratorManager?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            }
+            
+            if (vibrator == null || !vibrator.hasVibrator()) {
+                Log.w("InteractionFeedback", "El dispositivo no tiene vibrador o no está disponible")
+                return
+            }
+
+            val pattern = longArrayOf(0, 50, 30, 50) // patrón de vibración válido
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val effect = VibrationEffect.createWaveform(pattern, -1)
+                vibrator.vibrate(effect)
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(pattern, -1)
+            }
+        } catch (e: Exception) {
+            Log.e("InteractionFeedback", "Error al ejecutar vibración: ${e.message}")
+        }
     }
     
     /**

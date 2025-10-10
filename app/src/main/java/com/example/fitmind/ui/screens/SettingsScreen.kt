@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import android.util.Log
 import com.example.fitmind.ui.utils.InteractionFeedback
 import com.example.fitmind.ui.utils.rememberInteractionFeedback
 import com.example.fitmind.viewmodel.AuthViewModel
@@ -75,7 +76,11 @@ fun SettingsScreen(
         TimePickerDialog(
             selectedTime = selectedTime,
             onTimeSelected = { time ->
-                interactionFeedback.onSelection()
+                try {
+                    interactionFeedback.onSelection()
+                } catch (e: Exception) {
+                    Log.e("FitMind", "Error al ejecutar vibración en selección de tiempo: ${e.message}")
+                }
                 selectedTime = time
                 showTimePicker = false
                 notificationViewModel.setScheduledTime(time)
@@ -131,7 +136,11 @@ fun SettingsScreen(
             NotificationSettingsCard(
                 notificationsEnabled = notificationsEnabled,
                 onToggleNotifications = { 
-                    interactionFeedback.onThemeToggle()
+                    try {
+                        interactionFeedback.onThemeToggle()
+                    } catch (e: Exception) {
+                        Log.e("FitMind", "Error al ejecutar vibración en toggle notificaciones: ${e.message}")
+                    }
                     notificationViewModel.setEnabled(it) 
                 },
                 showNotificationFields = showNotificationFields,
@@ -139,7 +148,11 @@ fun SettingsScreen(
                 habits = habits,
                 selectedHabit = selectedHabit,
                 onHabitSelected = {
-                    interactionFeedback.onSelection()
+                    try {
+                        interactionFeedback.onSelection()
+                    } catch (e: Exception) {
+                        Log.e("FitMind", "Error al ejecutar vibración en selección de hábito: ${e.message}")
+                    }
                     selectedHabit = it
                     notificationViewModel.setHabitName(it)
                 },
@@ -189,7 +202,11 @@ fun SettingsScreen(
                             Switch(
                                 checked = localModeEnabled,
                                 onCheckedChange = { 
-                                    interactionFeedback.onThemeToggle()
+                                    try {
+                                        interactionFeedback.onThemeToggle()
+                                    } catch (e: Exception) {
+                                        Log.e("FitMind", "Error al ejecutar vibración en toggle modo local: ${e.message}")
+                                    }
                                     localModeEnabled = it 
                                 },
                                 colors = SwitchDefaults.colors(
