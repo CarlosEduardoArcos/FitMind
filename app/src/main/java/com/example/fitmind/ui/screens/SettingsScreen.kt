@@ -305,6 +305,7 @@ fun SettingsScreen(
 /**
  * Dialog moderno para seleccionar hora usando MaterialTimePicker
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(
     selectedTime: String,
