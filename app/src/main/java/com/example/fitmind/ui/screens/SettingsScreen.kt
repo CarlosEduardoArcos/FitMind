@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import android.util.Log
+import java.time.LocalTime
 import com.example.fitmind.ui.utils.InteractionFeedback
 import com.example.fitmind.ui.utils.rememberInteractionFeedback
 import com.example.fitmind.viewmodel.AuthViewModel
@@ -119,15 +120,15 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header moderno
             Text(
                 text = "⚙️ Configuración",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -177,9 +178,9 @@ fun SettingsScreen(
 
             // Sección de Configuración de modo de la app
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
-                elevation = CardDefaults.cardElevation(6.dp),
-                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(4.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -188,7 +189,12 @@ fun SettingsScreen(
                     ) {
                         Text("⚙️", fontSize = 20.sp)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Configuración de modo de la app", fontWeight = FontWeight.Bold, color = Color(0xFF3A86FF))
+                        Text(
+                            "Configuración de modo de la app", 
+                            fontWeight = FontWeight.Bold, 
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 16.sp
+                        )
                     }
                     
                     Spacer(modifier = Modifier.height(12.dp))
@@ -198,48 +204,67 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Usar modo local (sin Firebase)", color = Color.Black)
-                            Switch(
-                                checked = localModeEnabled,
-                                onCheckedChange = { 
-                                    try {
-                                        interactionFeedback.onThemeToggle()
-                                    } catch (e: Exception) {
-                                        Log.e("FitMind", "Error al ejecutar vibración en toggle modo local: ${e.message}")
-                                    }
-                                    localModeEnabled = it 
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.Black,
-                                    checkedTrackColor = Color(0xFF06D6A0),
-                                    uncheckedThumbColor = Color.Gray,
-                                    uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
-                                )
+                        Text(
+                            "Usar modo local (sin Firebase)", 
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Switch(
+                            checked = localModeEnabled,
+                            onCheckedChange = { 
+                                try {
+                                    interactionFeedback.onThemeToggle()
+                                } catch (e: Exception) {
+                                    Log.e("FitMind", "Error al ejecutar vibración en toggle modo local: ${e.message}")
+                                }
+                                localModeEnabled = it 
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                             )
+                        )
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
                         "Modo local activo: los datos no se sincronizan con la nube.",
-                        color = Color.Gray,
-                        style = MaterialTheme.typography.bodySmall
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 14.sp
                     )
                 }
             }
 
                    // Sección de Información de la App
                    Card(
-                       colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
-                       elevation = CardDefaults.cardElevation(6.dp),
-                       shape = RoundedCornerShape(16.dp),
+                       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                       elevation = CardDefaults.cardElevation(4.dp),
+                       shape = RoundedCornerShape(12.dp),
                        modifier = Modifier.fillMaxWidth()
                    ) {
                        Column(modifier = Modifier.padding(16.dp)) {
-                           Text("ℹ️ Información de la App", fontWeight = FontWeight.Bold, color = Color(0xFF3A86FF))
+                           Text(
+                               "ℹ️ Información de la App", 
+                               fontWeight = FontWeight.Bold, 
+                               color = MaterialTheme.colorScheme.onBackground,
+                               fontSize = 16.sp
+                           )
                            Spacer(modifier = Modifier.height(8.dp))
-                           Text("Versión: 1.0.0", color = Color.Black)
-                           Text("Desarrollado con Jetpack Compose y Firebase", color = Color.Black)
+                           Text(
+                               "Versión: 1.0.0", 
+                               color = MaterialTheme.colorScheme.onBackground,
+                               fontSize = 16.sp,
+                               fontWeight = FontWeight.Medium
+                           )
+                           Text(
+                               "Desarrollado con Jetpack Compose y Firebase", 
+                               color = MaterialTheme.colorScheme.onSurfaceVariant,
+                               fontSize = 14.sp
+                           )
                        }
                    }
 
@@ -256,12 +281,16 @@ fun SettingsScreen(
                            .fillMaxWidth()
                            .padding(bottom = 16.dp), // Padding extra para asegurar visibilidad
                        colors = ButtonDefaults.buttonColors(
-                           containerColor = Color.Red.copy(alpha = 0.8f),
-                           contentColor = Color.White
+                           containerColor = MaterialTheme.colorScheme.error,
+                           contentColor = MaterialTheme.colorScheme.onError
                        ),
                        shape = RoundedCornerShape(12.dp)
                    ) {
-                       Text("🚪 Cerrar Sesión", fontWeight = FontWeight.Bold)
+                       Text(
+                           "🚪 Cerrar Sesión", 
+                           fontWeight = FontWeight.Bold,
+                           fontSize = 16.sp
+                       )
                    }
         }
         
@@ -274,7 +303,7 @@ fun SettingsScreen(
 }
 
 /**
- * Dialog moderno para seleccionar hora
+ * Dialog moderno para seleccionar hora usando MaterialTimePicker
  */
 @Composable
 fun TimePickerDialog(
@@ -286,95 +315,67 @@ fun TimePickerDialog(
     val initialHour = timeParts.getOrNull(0)?.toIntOrNull() ?: 9
     val initialMinute = timeParts.getOrNull(1)?.toIntOrNull() ?: 0
     
-    var selectedHour by remember { mutableStateOf(initialHour) }
-    var selectedMinute by remember { mutableStateOf(initialMinute) }
+    val state = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = true
+    )
     
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 text = "🕐 Seleccionar Hora",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 18.sp
             )
         },
         text = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Hora seleccionada: ${String.format("%02d:%02d", selectedHour, selectedMinute)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                // TimePicker moderno de Material 3
+                TimePicker(
+                    state = state,
+                    colors = TimePickerDefaults.colors(
+                        clockDialColor = MaterialTheme.colorScheme.primaryContainer,
+                        clockDialSelectedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        clockDialUnselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        selectorColor = MaterialTheme.colorScheme.primary,
+                        periodSelectorBorderColor = MaterialTheme.colorScheme.primary,
+                        periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primary,
+                        periodSelectorUnselectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        periodSelectorUnselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primary,
+                        timeSelectorUnselectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        timeSelectorUnselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
                 
-                // Selector de hora simple
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Selector de horas
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Hora", style = MaterialTheme.typography.labelMedium)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = { 
-                                    selectedHour = if (selectedHour > 0) selectedHour - 1 else 23
-                                }
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Menos")
-                            }
-                            Text(
-                                text = String.format("%02d", selectedHour),
-                                style = MaterialTheme.typography.headlineSmall,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            IconButton(
-                                onClick = { 
-                                    selectedHour = if (selectedHour < 23) selectedHour + 1 else 0
-                                }
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Más")
-                            }
-                        }
-                    }
-                    
-                    Text(":", style = MaterialTheme.typography.headlineLarge)
-                    
-                    // Selector de minutos
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Minuto", style = MaterialTheme.typography.labelMedium)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = { 
-                                    selectedMinute = if (selectedMinute > 0) selectedMinute - 1 else 59
-                                }
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Menos")
-                            }
-                            Text(
-                                text = String.format("%02d", selectedMinute),
-                                style = MaterialTheme.typography.headlineSmall,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            IconButton(
-                                onClick = { 
-                                    selectedMinute = if (selectedMinute < 59) selectedMinute + 1 else 0
-                                }
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Más")
-                            }
-                        }
-                    }
-                }
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Hora seleccionada: ${String.format("%02d:%02d", state.hour, state.minute)}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 16.sp
+                )
             }
         },
         confirmButton = {
             FilledTonalButton(
                 onClick = {
-                    val timeString = String.format("%02d:%02d", selectedHour, selectedMinute)
+                    val timeString = String.format("%02d:%02d", state.hour, state.minute)
                     onTimeSelected(timeString)
-                }
+                },
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Icon(Icons.Default.Check, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -382,7 +383,12 @@ fun TimePickerDialog(
             }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
+            OutlinedButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
                 Text("Cancelar")
             }
         }
@@ -415,12 +421,12 @@ fun NotificationSettingsCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(8.dp),
-        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header con ícono y switch
@@ -441,7 +447,7 @@ fun NotificationSettingsCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Recordatorios Inteligentes",
-                        style = MaterialTheme.typography.titleMedium, // OPT: Reducido de titleLarge a titleMedium
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -603,12 +609,13 @@ fun HabitSelector(
     onExpandedChange: (Boolean) -> Unit
 ) {
     Column {
-        Text(
-            text = "Seleccionar Hábito",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+            Text(
+                text = "Seleccionar Hábito",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
         
         if (habits.isEmpty()) {
             Card(
@@ -629,7 +636,7 @@ fun HabitSelector(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Aún no tienes hábitos. Agrega uno para crear recordatorios.",
-                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -696,12 +703,13 @@ fun TimeSelector(
     onTimeClick: () -> Unit
 ) {
     Column {
-        Text(
-            text = "Hora del Recordatorio",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+            Text(
+                text = "Hora del Recordatorio",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
         
         OutlinedButton(
             onClick = onTimeClick,
@@ -717,7 +725,7 @@ fun TimeSelector(
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = selectedTime,
-                style = MaterialTheme.typography.bodyLarge, // OPT: Reducido de titleMedium a bodyLarge
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.width(12.dp))

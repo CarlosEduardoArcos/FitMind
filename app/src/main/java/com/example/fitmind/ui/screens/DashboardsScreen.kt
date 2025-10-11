@@ -329,8 +329,9 @@ fun StatisticsSection(
                 )
                 Text(
                     text = "Agrega hábitos para ver tus estadísticas detalladas",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )
             }
