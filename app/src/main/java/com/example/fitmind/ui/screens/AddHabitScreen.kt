@@ -39,6 +39,7 @@ import com.example.fitmind.viewmodel.SettingsViewModel
 import com.example.fitmind.data.FirebaseRepository
 import com.example.fitmind.model.Habito
 import com.example.fitmind.viewmodel.HabitViewModel
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -301,7 +302,12 @@ fun AddHabitScreen(
                     onClick = {
                         try {
                             if (name.isNotBlank() && category.isNotBlank() && frequency.isNotBlank()) {
-                                val nuevo = Habito("", name, category, frequency)
+                                val nuevo = Habito(
+                                    id = UUID.randomUUID().toString(),
+                                    nombre = name,
+                                    categoria = category,
+                                    frecuencia = frequency
+                                )
                                 habitViewModel.addHabitLocal(nuevo)
                                 Toast.makeText(context, "🏋️‍♀️ Hábito agregado", Toast.LENGTH_SHORT).show()
                                 navController.navigate("home") {

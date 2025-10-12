@@ -183,7 +183,10 @@ fun AdminDashboardScreen(
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(users) { (uid, userData) ->
+                            items(
+                                items = users,
+                                key = { (uid, _) -> uid }
+                            ) { (uid, userData) ->
                                 UserCard(
                                     uid = uid,
                                     userData = userData,

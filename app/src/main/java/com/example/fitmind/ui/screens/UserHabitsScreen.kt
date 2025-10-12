@@ -126,7 +126,10 @@ fun UserHabitsScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.padding(vertical = 8.dp)
                         ) {
-                            items(selectedUserHabits) { habit ->
+                            items(
+                                items = selectedUserHabits,
+                                key = { habit -> habit["id"]?.toString() ?: habit["nombre"]?.toString() ?: habit.hashCode().toString() }
+                            ) { habit ->
                                 HabitCard(habit = habit)
                             }
                         }
