@@ -8,6 +8,7 @@ import com.example.fitmind.data.local.*
 import com.example.fitmind.data.FirebaseRepository
 import com.example.fitmind.model.Habito
 import com.example.fitmind.utils.NetworkUtils
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +38,63 @@ class HabitViewModel : ViewModel() {
         observeConnectionChanges()
     }
     
+    /**
+     * Nueva función para agregar hábitos que maneja tanto Firebase como almacenamiento local
+     */
+    fun addHabit(habit: Habito) {
+        val ctx = context ?: return
+        val firebaseRepo = _firebaseRepository.value
+        val settingsVM = _settingsViewModel.value
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Siempre guardar localmente primero
+                saveHabitLocally(ctx, serializeHabito(habit))
+                
+                // Verificar si hay usuario autenticado
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val userId = currentUser?.uid
+                
+                if (userId != null && NetworkUtils.isInternetAvailable(ctx)) {
+                    // Usuario autenticado y con conexión - guardar en Firebase
+                    try {
+                        val habitMap = mapOf(
+                            "id" to habit.id,
+                            "nombre" to habit.nombre,
+                            "categoria" to habit.categoria,
+                            "frecuencia" to habit.frecuencia,
+                            "completado" to habit.completado,
+                            "usuarioId" to userId
+                        )
+                        
+                        firebaseRepo?.addHabit(userId, habitMap) { success, error ->
+                            if (success) {
+                                showToast(ctx, "✅ Hábito guardado en la nube y localmente")
+                            } else {
+                                // Si falla Firebase, mantener solo local
+                                addToPendingSync(habit)
+                                showToast(ctx, "⚠️ Guardado localmente. Se sincronizará cuando haya conexión.")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // Si hay error con Firebase, mantener solo local
+                        addToPendingSync(habit)
+                        showToast(ctx, "⚠️ Guardado localmente. Se sincronizará cuando haya conexión.")
+                    }
+                } else if (userId != null) {
+                    // Usuario autenticado pero sin conexión
+                    addToPendingSync(habit)
+                    showToast(ctx, "⚠️ Sin conexión. Hábito guardado localmente.")
+                } else {
+                    // Usuario no autenticado (modo invitado)
+                    showToast(ctx, "💾 Hábito guardado localmente (modo invitado)")
+                }
+            } catch (e: Exception) {
+                showToast(ctx, "❌ Error al guardar el hábito")
+            }
+        }
+    }
+    
     private fun loadHabits() {
         val ctx = context ?: return
         viewModelScope.launch {
@@ -52,51 +110,8 @@ class HabitViewModel : ViewModel() {
     }
 
     fun addHabitLocal(hab: Habito) {
-        val ctx = context ?: return
-        val settingsVM = _settingsViewModel.value
-        val firebaseRepo = _firebaseRepository.value
-        
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Siempre guardar localmente primero
-                saveHabitLocally(ctx, serializeHabito(hab))
-                
-                // Verificar si debe sincronizar con Firebase
-                val shouldSync = shouldSyncWithFirebase()
-                
-                if (shouldSync && firebaseRepo != null) {
-                    try {
-                        // Obtener userId del AuthViewModel o usar un valor por defecto
-                        val userId = "local_user" // TODO: Integrar con AuthViewModel
-                        val habitMap = mapOf(
-                            "id" to hab.id,
-                            "nombre" to hab.nombre,
-                            "categoria" to hab.categoria,
-                            "frecuencia" to hab.frecuencia,
-                            "completado" to hab.completado,
-                            "usuarioId" to userId
-                        )
-                        firebaseRepo.addHabit(userId, habitMap) { success, error ->
-                            if (success) {
-                                showToast(ctx, "Modo online activo: hábito sincronizado con la nube.")
-                            } else {
-                                // Si falla la sincronización, agregar a la lista de pendientes
-                                addToPendingSync(hab)
-                                showToast(ctx, "Sin conexión: el hábito se guardará localmente.")
-                            }
-                        }
-                    } catch (e: Exception) {
-                        // Si falla la sincronización, agregar a la lista de pendientes
-                        addToPendingSync(hab)
-                        showToast(ctx, "Sin conexión: el hábito se guardará localmente.")
-                    }
-                } else {
-                    showToast(ctx, "Sin conexión: el hábito se guardará localmente.")
-                }
-            } catch (e: Exception) {
-                showToast(ctx, "Error al guardar el hábito.")
-            }
-        }
+        // Redirigir a la nueva función addHabit para mantener compatibilidad
+        addHabit(hab)
     }
 
     fun deleteHabitLocal(hab: Habito) {
@@ -109,9 +124,11 @@ class HabitViewModel : ViewModel() {
                 deleteHabitLocally(ctx, serializeHabito(hab))
                 
                 // Si está conectado y tiene Firebase, también eliminar de la nube
-                if (shouldSyncWithFirebase() && firebaseRepo != null) {
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val userId = currentUser?.uid
+                
+                if (userId != null && NetworkUtils.isInternetAvailable(ctx) && firebaseRepo != null) {
                     try {
-                        val userId = "local_user" // TODO: Integrar con AuthViewModel
                         val habitMap = mapOf(
                             "id" to hab.id,
                             "nombre" to hab.nombre,
@@ -146,9 +163,11 @@ class HabitViewModel : ViewModel() {
                 saveHabitLocally(ctx, serializeHabito(updated))
                 
                 // Si está conectado y tiene Firebase, también actualizar en la nube
-                if (shouldSyncWithFirebase() && firebaseRepo != null) {
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val userId = currentUser?.uid
+                
+                if (userId != null && NetworkUtils.isInternetAvailable(ctx) && firebaseRepo != null) {
                     try {
-                        val userId = "local_user" // TODO: Integrar con AuthViewModel
                         val oldHabitMap = mapOf(
                             "id" to hab.id,
                             "nombre" to hab.nombre,
@@ -245,7 +264,9 @@ class HabitViewModel : ViewModel() {
             ) { isConnected, _, onlineModeEnabled ->
                 isConnected && onlineModeEnabled
             }.distinctUntilChanged().collect { shouldSync ->
-                if (shouldSync && _pendingSyncHabits.value.isNotEmpty()) {
+                // Solo sincronizar si hay usuario autenticado
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                if (shouldSync && _pendingSyncHabits.value.isNotEmpty() && currentUser != null) {
                     syncPendingHabits()
                 }
             }
@@ -260,7 +281,14 @@ class HabitViewModel : ViewModel() {
         val firebaseRepo = _firebaseRepository.value ?: return
         
         try {
-            val userId = "local_user" // TODO: Integrar con AuthViewModel
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            val userId = currentUser?.uid
+            
+            if (userId == null) {
+                // No hay usuario autenticado, no se puede sincronizar
+                return
+            }
+            
             val pendingHabits = _pendingSyncHabits.value.toList()
             
             for (habit in pendingHabits) {
@@ -317,14 +345,21 @@ class HabitViewModel : ViewModel() {
         val ctx = context ?: return
         val firebaseRepo = _firebaseRepository.value ?: return
         
-        if (!shouldSyncWithFirebase()) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val userId = currentUser?.uid
+        
+        if (userId == null) {
+            showToast(ctx, "Debes estar autenticado para sincronizar hábitos.")
+            return
+        }
+        
+        if (!NetworkUtils.isInternetAvailable(ctx)) {
             showToast(ctx, "No hay conexión disponible para sincronizar.")
             return
         }
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val userId = "local_user" // TODO: Integrar con AuthViewModel
                 val localHabits = _habits.value
                 
                 for (habit in localHabits) {
@@ -353,5 +388,6 @@ class HabitViewModel : ViewModel() {
         }
     }
 }
+
 
 

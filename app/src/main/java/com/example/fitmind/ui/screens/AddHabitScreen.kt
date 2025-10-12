@@ -308,11 +308,12 @@ fun AddHabitScreen(
                                     categoria = category,
                                     frecuencia = frequency
                                 )
-                                habitViewModel.addHabitLocal(nuevo)
-                                Toast.makeText(context, "🏋️‍♀️ Hábito agregado", Toast.LENGTH_SHORT).show()
+                                habitViewModel.addHabit(nuevo)
                                 navController.navigate("home") {
                                     popUpTo("addHabit") { inclusive = true }
                                 }
+                            } else {
+                                Toast.makeText(context, "⚠️ Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
                             }
                         } catch (e: Exception) {
                             // Si hay error, intentar navegación simple
