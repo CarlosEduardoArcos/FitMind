@@ -30,7 +30,8 @@ class FirebaseRepository {
                 
                 Log.d("Firestore", "Guardando datos del usuario en Firestore: $userData")
                 
-                db.collection("users").document(uid).set(userData)
+                // Usar merge para no sobrescribir datos existentes
+                db.collection("users").document(uid).set(userData, com.google.firebase.firestore.SetOptions.merge())
                     .addOnSuccessListener { 
                         Log.d("Firestore", "Usuario guardado exitosamente en Firestore")
                         onResult(true, null) 
@@ -83,34 +84,21 @@ class FirebaseRepository {
     fun addHabit(uid: String, habit: Map<String, Any>, onResult: (Boolean, String?) -> Unit) {
         Log.d("Firestore", "Agregando hábito para usuario UID: $uid")
         
-        // Usar FieldValue.arrayUnion para agregar a la lista de hábitos
-        db.collection("users").document(uid).update(
-            "habitos", FieldValue.arrayUnion(habit)
-        )
-            .addOnSuccessListener { 
-                Log.d("Firestore", "Hábito agregado exitosamente para UID: $uid")
-                onResult(true, null) 
-            }
-            .addOnFailureListener { exception ->
-                Log.e("Firestore", "Error al agregar hábito para UID: $uid", exception)
-                // Si el campo hábitos no existe, crearlo primero
-                if (exception.message?.contains("No document to update") == true) {
-                    Log.d("Firestore", "Creando campo hábitos inicial para UID: $uid")
-                    db.collection("users").document(uid).update(
-                        "habitos", listOf(habit)
-                    )
-                        .addOnSuccessListener { 
-                            Log.d("Firestore", "Campo hábitos creado y hábito agregado para UID: $uid")
-                            onResult(true, null) 
-                        }
-                        .addOnFailureListener { createException ->
-                            Log.e("Firestore", "Error al crear campo hábitos para UID: $uid", createException)
-                            onResult(false, createException.message) 
-                        }
-                } else {
+        // Primero asegurar que el campo hábitos existe
+        ensureHabitsFieldExists(uid) {
+            // Usar FieldValue.arrayUnion para agregar a la lista de hábitos
+            db.collection("users").document(uid).update(
+                "habitos", FieldValue.arrayUnion(habit)
+            )
+                .addOnSuccessListener { 
+                    Log.d("Firestore", "Hábito agregado exitosamente para UID: $uid")
+                    onResult(true, null) 
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Firestore", "Error al agregar hábito para UID: $uid", exception)
                     onResult(false, exception.message) 
                 }
-            }
+        }
     }
 
     fun getHabits(uid: String, onResult: (List<Map<String, Any>>) -> Unit) {
@@ -276,7 +264,7 @@ class FirebaseRepository {
         db.collection("users").document(uid).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val userData = document.data
+                    val userData = document.data ?: emptyMap()
                     Log.d("Firestore", "Información del usuario obtenida para UID: $uid")
                     onResult(userData)
                 } else {
@@ -287,6 +275,249 @@ class FirebaseRepository {
             .addOnFailureListener { exception ->
                 Log.e("Firestore", "Error al obtener información del usuario para UID: $uid", exception)
                 onResult(null)
+            }
+    }
+    
+    /**
+     * Inicializa y valida los datos del usuario al iniciar sesión
+     * Verifica que exista el campo hábitos y lo crea si no existe
+     */
+    fun initializeUserData(uid: String, onResult: (Boolean, String?) -> Unit) {
+        Log.d("Firestore", "Inicializando datos del usuario UID: $uid")
+        
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val userData = document.data ?: emptyMap() ?: emptyMap()
+                    
+                    // Verificar si el campo hábitos existe
+                    val habitos = userData["habitos"]
+                    
+                    if (habitos == null) {
+                        Log.d("Firestore", "Campo 'habitos' no encontrado, agregándolo automáticamente para UID: $uid")
+                        
+                        // Agregar el campo hábitos usando merge para no sobrescribir otros campos
+                        val updates = hashMapOf<String, Any>(
+                            "habitos" to emptyList<Map<String, Any>>()
+                        )
+                        
+                        db.collection("users").document(uid).update(updates)
+                            .addOnSuccessListener {
+                                Log.d("Firestore", "Campo 'habitos' agregado automáticamente para UID: $uid")
+                                onResult(true, "Campo hábitos inicializado")
+                            }
+                            .addOnFailureListener { exception ->
+                                Log.e("Firestore", "Error al agregar campo 'habitos' para UID: $uid", exception)
+                                // Intentar crear el documento completo si falla la actualización
+                                createCompleteUserDocument(uid, userData, onResult)
+                            }
+                    } else {
+                        Log.d("Firestore", "Campo 'habitos' ya existe para UID: $uid")
+                        
+                        // Verificar si hay otros campos obligatorios faltantes
+                        val requiredFields = listOf("nombre", "email", "rol")
+                        val missingFields = requiredFields.filter { userData[it] == null }
+                        
+                        if (missingFields.isNotEmpty()) {
+                            Log.w("Firestore", "Campos faltantes para UID: $uid - $missingFields")
+                            onResult(false, "Campos obligatorios faltantes: ${missingFields.joinToString(", ")}")
+                        } else {
+                            onResult(true, "Datos del usuario válidos")
+                        }
+                    }
+                } else {
+                    Log.w("Firestore", "Documento de usuario no encontrado para UID: $uid")
+                    onResult(false, "Usuario no encontrado en Firestore")
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error al verificar datos del usuario para UID: $uid", exception)
+                onResult(false, exception.message)
+            }
+    }
+    
+    /**
+     * Crea un documento completo del usuario si falla la actualización
+     */
+    private fun createCompleteUserDocument(uid: String, existingData: Map<String, Any>, onResult: (Boolean, String?) -> Unit) {
+        Log.d("Firestore", "Creando documento completo del usuario para UID: $uid")
+        
+        val userData = hashMapOf<String, Any>(
+            "habitos" to emptyList<Map<String, Any>>(),
+            "fechaRegistro" to System.currentTimeMillis()
+        )
+        
+        // Agregar campos existentes que no sean null
+        existingData.forEach { (key, value) ->
+            if (value != null) {
+                userData[key] = value
+            }
+        }
+        
+        // Usar merge para no sobrescribir datos existentes
+        db.collection("users").document(uid).set(userData, com.google.firebase.firestore.SetOptions.merge())
+            .addOnSuccessListener {
+                Log.d("Firestore", "Documento completo del usuario creado para UID: $uid")
+                onResult(true, "Documento de usuario creado/actualizado")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error al crear documento completo para UID: $uid", exception)
+                onResult(false, exception.message)
+            }
+    }
+    
+    /**
+     * Valida que el campo hábitos existe antes de agregar un hábito
+     */
+    fun ensureHabitsFieldExists(uid: String, onComplete: () -> Unit) {
+        Log.d("Firestore", "Verificando campo hábitos para UID: $uid")
+        
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val habitos = document.get("habitos")
+                    if (habitos == null) {
+                        Log.d("Firestore", "Campo hábitos no existe, creándolo para UID: $uid")
+                        db.collection("users").document(uid).update("habitos", emptyList<Map<String, Any>>())
+                            .addOnSuccessListener {
+                                Log.d("Firestore", "Campo hábitos creado exitosamente para UID: $uid")
+                                onComplete()
+                            }
+                            .addOnFailureListener { exception ->
+                                Log.e("Firestore", "Error al crear campo hábitos para UID: $uid", exception)
+                                onComplete() // Continuar de todas formas
+                            }
+                    } else {
+                        Log.d("Firestore", "Campo hábitos ya existe para UID: $uid")
+                        onComplete()
+                    }
+                } else {
+                    Log.w("Firestore", "Documento de usuario no encontrado para UID: $uid")
+                    onComplete() // Continuar de todas formas
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error al verificar campo hábitos para UID: $uid", exception)
+                onComplete() // Continuar de todas formas
+            }
+    }
+    
+    /**
+     * Migra todos los usuarios existentes para asegurar que tengan el campo hábitos
+     * Esta función debe ejecutarse una sola vez para migrar usuarios antiguos
+     */
+    fun migrateAllUsersToHaveHabitsField(onProgress: (Int, Int) -> Unit, onComplete: (Boolean, String?) -> Unit) {
+        Log.d("Firestore", "Iniciando migración de usuarios para agregar campo hábitos")
+        
+        db.collection("users").get()
+            .addOnSuccessListener { snapshot ->
+                val totalUsers = snapshot.size()
+                var processedUsers = 0
+                var successCount = 0
+                var errorCount = 0
+                
+                Log.d("Firestore", "Procesando $totalUsers usuarios para migración")
+                
+                if (totalUsers == 0) {
+                    onComplete(true, "No hay usuarios para migrar")
+                    return@addOnSuccessListener
+                }
+                
+                snapshot.documents.forEach { document ->
+                    val uid = document.id
+                    val userData = document.data ?: emptyMap()
+                    
+                    // Verificar si el campo hábitos existe
+                    val habitos = userData["habitos"]
+                    
+                    if (habitos == null) {
+                        Log.d("Firestore", "Migrando usuario UID: $uid - agregando campo hábitos")
+                        
+                        db.collection("users").document(uid).update(
+                            "habitos", emptyList<Map<String, Any>>()
+                        )
+                            .addOnSuccessListener {
+                                successCount++
+                                processedUsers++
+                                onProgress(processedUsers, totalUsers)
+                                Log.d("Firestore", "Usuario UID: $uid migrado exitosamente")
+                                
+                                if (processedUsers == totalUsers) {
+                                    Log.d("Firestore", "Migración completada: $successCount exitosos, $errorCount errores")
+                                    onComplete(true, "Migración completada: $successCount usuarios actualizados")
+                                }
+                            }
+                            .addOnFailureListener { exception ->
+                                errorCount++
+                                processedUsers++
+                                onProgress(processedUsers, totalUsers)
+                                Log.e("Firestore", "Error al migrar usuario UID: $uid", exception)
+                                
+                                if (processedUsers == totalUsers) {
+                                    Log.d("Firestore", "Migración completada con errores: $successCount exitosos, $errorCount errores")
+                                    onComplete(false, "Migración completada con $errorCount errores")
+                                }
+                            }
+                    } else {
+                        Log.d("Firestore", "Usuario UID: $uid ya tiene campo hábitos")
+                        processedUsers++
+                        onProgress(processedUsers, totalUsers)
+                        
+                        if (processedUsers == totalUsers) {
+                            Log.d("Firestore", "Migración completada: todos los usuarios ya tenían el campo hábitos")
+                            onComplete(true, "Todos los usuarios ya tenían el campo hábitos")
+                        }
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error al obtener usuarios para migración", exception)
+                onComplete(false, exception.message)
+            }
+    }
+    
+    /**
+     * Verifica la estructura de Firestore y reporta problemas
+     */
+    fun validateFirestoreStructure(onResult: (Boolean, String?) -> Unit) {
+        Log.d("Firestore", "Validando estructura de Firestore")
+        
+        db.collection("users").limit(10).get()
+            .addOnSuccessListener { snapshot ->
+                val issues = mutableListOf<String>()
+                var validUsers = 0
+                
+                snapshot.documents.forEach { document ->
+                    val uid = document.id
+                    val data = document.data ?: emptyMap()
+                    
+                    // Verificar campos obligatorios
+                    val requiredFields = listOf("nombre", "email", "rol")
+                    val missingFields = requiredFields.filter { data[it] == null }
+                    
+                    if (missingFields.isNotEmpty()) {
+                        issues.add("Usuario $uid: faltan campos ${missingFields.joinToString(", ")}")
+                    }
+                    
+                    // Verificar campo hábitos
+                    if (data["habitos"] == null) {
+                        issues.add("Usuario $uid: falta campo hábitos")
+                    } else {
+                        validUsers++
+                    }
+                }
+                
+                if (issues.isEmpty()) {
+                    Log.d("Firestore", "Estructura de Firestore válida: $validUsers usuarios verificados")
+                    onResult(true, "Estructura válida: $validUsers usuarios verificados")
+                } else {
+                    Log.w("Firestore", "Problemas encontrados en estructura: ${issues.size}")
+                    onResult(false, "Problemas encontrados: ${issues.joinToString("; ")}")
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error al validar estructura de Firestore", exception)
+                onResult(false, exception.message)
             }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.fitmind.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fitmind.data.FirebaseRepository
@@ -50,11 +51,26 @@ class AuthViewModel : ViewModel() {
         
         _isLoading.value = true
         repo.loginUser(email, password) { success, msg ->
-            _isLoading.value = false
             if (success && auth?.currentUser != null) {
-                loadUserRole(auth!!.currentUser!!.uid)
+                val uid = auth!!.currentUser!!.uid
+                
+                // Inicializar datos del usuario (verificar campo hábitos)
+                repo.initializeUserData(uid) { initSuccess, initMsg ->
+                    _isLoading.value = false
+                    
+                    if (initSuccess) {
+                        loadUserRole(uid)
+                        onResult(true, null)
+                    } else {
+                        // Continuar con el login aunque falle la inicialización
+                        loadUserRole(uid)
+                        onResult(true, "Login exitoso pero ${initMsg ?: "error en inicialización"}")
+                    }
+                }
+            } else {
+                _isLoading.value = false
+                onResult(success, msg)
             }
-            onResult(success, msg)
         }
     }
 
@@ -66,11 +82,26 @@ class AuthViewModel : ViewModel() {
         
         _isLoading.value = true
         repo.registerUser(nombre, email, password) { success, msg ->
-            _isLoading.value = false
             if (success && auth?.currentUser != null) {
-                loadUserRole(auth!!.currentUser!!.uid)
+                val uid = auth!!.currentUser!!.uid
+                
+                // Verificar que los datos se crearon correctamente
+                repo.initializeUserData(uid) { initSuccess, initMsg ->
+                    _isLoading.value = false
+                    
+                    if (initSuccess) {
+                        loadUserRole(uid)
+                        onResult(true, null)
+                    } else {
+                        // Continuar con el registro aunque falle la verificación
+                        loadUserRole(uid)
+                        onResult(true, "Registro exitoso pero ${initMsg ?: "error en verificación"}")
+                    }
+                }
+            } else {
+                _isLoading.value = false
+                onResult(success, msg)
             }
-            onResult(success, msg)
         }
     }
 
@@ -98,5 +129,35 @@ class AuthViewModel : ViewModel() {
 
     fun getCurrentUserId(): String? {
         return _currentUser.value?.uid
+    }
+    
+    /**
+     * Ejecuta la migración de usuarios existentes para asegurar que tengan el campo hábitos
+     * Esta función debe llamarse una sola vez al inicializar la app
+     */
+    fun migrateExistingUsersIfNeeded() {
+        viewModelScope.launch {
+            try {
+                repo.validateFirestoreStructure { isValid, message ->
+                    if (!isValid) {
+                        Log.d("AuthViewModel", "Estructura de Firestore necesita migración: $message")
+                        
+                        // Ejecutar migración
+                        repo.migrateAllUsersToHaveHabitsField(
+                            onProgress = { processed, total ->
+                                Log.d("AuthViewModel", "Migración progreso: $processed/$total")
+                            },
+                            onComplete = { success, resultMessage ->
+                                Log.d("AuthViewModel", "Migración completada: $success - $resultMessage")
+                            }
+                        )
+                    } else {
+                        Log.d("AuthViewModel", "Estructura de Firestore válida: $message")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error durante validación/migración", e)
+            }
+        }
     }
 }
