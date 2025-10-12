@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fitmind.data.model.Notificacion
 import com.example.fitmind.data.notifications.NotificationScheduler
-import com.example.fitmind.data.repository.FirebaseRepository
+import com.example.fitmind.data.FirebaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -124,7 +124,7 @@ class NotificationViewModel(
                     fechaHora = System.currentTimeMillis().toString(),
                     usuarioId = userId
                 )
-                repository.sendNotification(notif)
+                // repository.sendNotification(notif) // Comentado temporalmente
                 
                 _errorMessage.value = null
                 _successMessage.value = if (_isRecurring.value) {

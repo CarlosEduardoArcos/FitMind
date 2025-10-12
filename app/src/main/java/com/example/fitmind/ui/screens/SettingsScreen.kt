@@ -29,6 +29,7 @@ import com.example.fitmind.ui.utils.rememberInteractionFeedback
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.NotificationViewModel
+import com.example.fitmind.viewmodel.SettingsViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,7 +38,8 @@ fun SettingsScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
     notificationViewModel: NotificationViewModel,
-    habitViewModel: HabitViewModel
+    habitViewModel: HabitViewModel,
+    settingsViewModel: SettingsViewModel
 ) {
     val context = LocalContext.current
     val gradient = Brush.verticalGradient(
@@ -58,8 +60,13 @@ fun SettingsScreen(
     // Estados del ViewModel de hábitos
     val habits by habitViewModel.habits.collectAsState()
     
+    // Estados del SettingsViewModel
+    val isOnlineModeEnabled by settingsViewModel.isOnlineModeEnabled.collectAsState()
+    val isConnected by settingsViewModel.isConnected.collectAsState()
+    val connectionType by settingsViewModel.connectionType.collectAsState()
+    val appModeStatus by settingsViewModel.appModeStatus.collectAsState()
+    
     // Estados locales para la UI moderna
-    var localModeEnabled by remember { mutableStateOf(true) }
     var showNotificationFields by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var selectedHabit by remember { mutableStateOf("") }
@@ -71,6 +78,11 @@ fun SettingsScreen(
     
     // Sistema de feedback interactivo
     val interactionFeedback = rememberInteractionFeedback()
+    
+    // Inicializar SettingsViewModel con contexto
+    LaunchedEffect(Unit) {
+        settingsViewModel.initializeContext(context)
+    }
 
     // TimePicker Dialog
     if (showTimePicker) {
@@ -109,6 +121,15 @@ fun SettingsScreen(
             )
             notificationViewModel.clearSuccess()
         }
+    }
+    
+    // Mostrar mensaje cuando cambia el estado de conexión
+    LaunchedEffect(appModeStatus) {
+        val message = settingsViewModel.getConnectionChangeMessage()
+        snackbarHostState.showSnackbar(
+            message = message,
+            duration = SnackbarDuration.Short
+        )
     }
 
     Box(
@@ -199,26 +220,64 @@ fun SettingsScreen(
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
+                    // Indicador de estado actual
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = when (appModeStatus) {
+                                com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> 
+                                    MaterialTheme.colorScheme.primaryContainer
+                                com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> 
+                                    MaterialTheme.colorScheme.errorContainer
+                                com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> 
+                                    MaterialTheme.colorScheme.surfaceVariant
+                            }
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = settingsViewModel.getStatusMessage(),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "($connectionType)",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Usar modo local (sin Firebase)", 
+                            "Modo online (Firebase)", 
                             color = MaterialTheme.colorScheme.onBackground,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Switch(
-                            checked = localModeEnabled,
-                            onCheckedChange = { 
+                            checked = isOnlineModeEnabled,
+                            onCheckedChange = { enabled ->
                                 try {
                                     interactionFeedback.onThemeToggle()
                                 } catch (e: Exception) {
-                                    Log.e("FitMind", "Error al ejecutar vibración en toggle modo local: ${e.message}")
+                                    Log.e("FitMind", "Error al ejecutar vibración en toggle modo: ${e.message}")
                                 }
-                                localModeEnabled = it 
+                                
+                                settingsViewModel.setOnlineMode(enabled)
+                                
+                                // El mensaje se mostrará automáticamente cuando cambie appModeStatus
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = MaterialTheme.colorScheme.primary,
@@ -232,7 +291,14 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        "Modo local activo: los datos no se sincronizan con la nube.",
+                        when (appModeStatus) {
+                            com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> 
+                                "Modo online activo: los datos se sincronizan con Firebase."
+                            com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> 
+                                "Sin conexión: operando temporalmente en modo local."
+                            com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> 
+                                "Modo offline activo: los datos se guardarán localmente."
+                        },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp
                     )

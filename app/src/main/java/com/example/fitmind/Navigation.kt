@@ -30,6 +30,8 @@ import com.example.fitmind.viewmodel.ChartViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.NotificationViewModel
 import com.example.fitmind.viewmodel.ProgressViewModel
+import com.example.fitmind.viewmodel.SettingsViewModel
+import com.example.fitmind.data.FirebaseRepository
 
 @Composable
 fun AppNavigation(
@@ -45,6 +47,8 @@ fun AppNavigation(
     val habitViewModel: HabitViewModel = viewModel()
     val progressViewModel: ProgressViewModel = viewModel()
     val notificationViewModel: NotificationViewModel = viewModel()
+    val settingsViewModel: SettingsViewModel = viewModel()
+    val firebaseRepository: FirebaseRepository = remember { FirebaseRepository() }
     
     val userRole by authViewModel.userRole.collectAsState()
     val isAdmin = userRole == "admin"
@@ -67,8 +71,21 @@ fun AppNavigation(
                 composable("login") { LoginScreen(navController, darkTheme, onToggleTheme, authViewModel) }
                 composable("register") { RegisterScreen(navController, authViewModel) }
                 composable("admin") { AdminDashboardScreen(navController, viewModel<AdminViewModel>(), authViewModel) }
-                composable("home") { HomeScreen(navController, habitViewModel) }
-                composable("addHabit") { AddHabitScreen(navController, habitViewModel) }
+                composable("home") { 
+                    HomeScreen(
+                        navController, 
+                        habitViewModel,
+                        settingsViewModel
+                    ) 
+                }
+                composable("addHabit") { 
+                    AddHabitScreen(
+                        navController, 
+                        habitViewModel,
+                        settingsViewModel,
+                        firebaseRepository
+                    ) 
+                }
                 composable("dashboards") { 
                     DashboardsScreen(
                         navController, 
@@ -81,7 +98,8 @@ fun AppNavigation(
                         navController,
                         authViewModel,
                         notificationViewModel,
-                        habitViewModel
+                        habitViewModel,
+                        settingsViewModel
                     )
                 }
             }

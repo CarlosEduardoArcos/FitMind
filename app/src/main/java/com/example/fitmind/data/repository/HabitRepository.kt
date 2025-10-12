@@ -6,6 +6,7 @@ import com.example.fitmind.data.local.deleteHabitLocally
 import com.example.fitmind.data.local.getLocalHabitsFlow
 import com.example.fitmind.model.Habito
 import com.example.fitmind.data.model.Registro
+import com.example.fitmind.data.FirebaseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -16,13 +17,25 @@ import kotlinx.coroutines.flow.map
 class HabitRepository(
     private val firebaseRepository: FirebaseRepository = FirebaseRepository()
 ) {
-    suspend fun crearHabito(habito: Habito) = firebaseRepository.saveHabit(habito)
+    fun crearHabito(habito: Habito, userId: String, onResult: (Boolean, String?) -> Unit) {
+        val habitMap = mapOf(
+            "id" to habito.id,
+            "nombre" to habito.nombre,
+            "categoria" to habito.categoria,
+            "frecuencia" to habito.frecuencia,
+            "completado" to habito.completado,
+            "usuarioId" to userId
+        )
+        firebaseRepository.addHabit(userId, habitMap, onResult)
+    }
 
-    fun obtenerHabitos(userId: String): Flow<List<Habito>> = firebaseRepository.getHabits(userId)
+    fun obtenerHabitos(userId: String, onResult: (List<Map<String, Any>>) -> Unit) {
+        firebaseRepository.getHabits(userId, onResult)
+    }
 
-    suspend fun registrarProgreso(registro: Registro) = firebaseRepository.addRecord(registro)
-
-    fun obtenerRegistros(userId: String): Flow<List<Registro>> = firebaseRepository.getRecords(userId)
+    // Funciones para registros (si se implementan en el futuro)
+    // suspend fun registrarProgreso(registro: Registro) = firebaseRepository.addRecord(registro)
+    // fun obtenerRegistros(userId: String): Flow<List<Registro>> = firebaseRepository.getRecords(userId)
 
     // Funciones para persistencia local con DataStore
     suspend fun saveHabitLocal(context: Context, habit: Habito) {

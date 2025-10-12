@@ -2,6 +2,11 @@ package com.example.fitmind.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
 import com.example.fitmind.model.Habito
@@ -55,18 +62,26 @@ import com.example.fitmind.ui.utils.rememberIconRotation
 import com.example.fitmind.ui.utils.animatedScale
 import com.example.fitmind.ui.utils.animatedRotation
 import com.example.fitmind.viewmodel.HabitViewModel
+import com.example.fitmind.viewmodel.SettingsViewModel
 
 @Composable
-fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
+fun HomeScreen(
+    navController: NavController, 
+    habitViewModel: HabitViewModel,
+    settingsViewModel: SettingsViewModel
+) {
     val context = LocalContext.current
     
     // Inicializar ViewModel con contexto
     LaunchedEffect(Unit) {
         habitViewModel.initializeContext(context)
+        settingsViewModel.initializeContext(context)
     }
     
     // OPT: Manejo seguro de estado
     val habits by habitViewModel.habits.collectAsState()
+    val appModeStatus by settingsViewModel.appModeStatus.collectAsState()
+    val connectionType by settingsViewModel.connectionType.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     
     // Sistema de feedback interactivo
@@ -89,11 +104,18 @@ fun HomeScreen(navController: NavController, habitViewModel: HabitViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
+            // Indicador de estado de conexión
+            ConnectionStatusIndicator(
+                appModeStatus = appModeStatus,
+                connectionType = connectionType,
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+            )
+            
             Text(
                 text = "Mis Hábitos",
                 color = Color.White,
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
             )
 
             if (habits.isEmpty()) {
@@ -279,6 +301,76 @@ fun HabitCard(
                         Icons.Default.Delete,
                         contentDescription = "Eliminar hábito",
                         tint = Color.Red.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Componente para mostrar el estado de conexión
+ */
+@Composable
+fun ConnectionStatusIndicator(
+    appModeStatus: com.example.fitmind.viewmodel.AppModeStatus,
+    connectionType: String,
+    modifier: Modifier = Modifier
+) {
+    val statusMessage = when (appModeStatus) {
+        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> "🟢 Conectado (modo online)"
+        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> "🔴 Sin conexión (modo local temporal)"
+        com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> "🔴 Modo sin conexión"
+    }
+    
+    val backgroundColor = when (appModeStatus) {
+        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> 
+            MaterialTheme.colorScheme.primaryContainer
+        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> 
+            MaterialTheme.colorScheme.errorContainer
+        com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> 
+            MaterialTheme.colorScheme.surfaceVariant
+    }
+    
+    val contentColor = when (appModeStatus) {
+        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> 
+            MaterialTheme.colorScheme.onPrimaryContainer
+        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> 
+            MaterialTheme.colorScheme.onErrorContainer
+        com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> 
+            MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    
+    AnimatedVisibility(
+        visible = true,
+        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+        modifier = modifier
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = backgroundColor),
+            elevation = CardDefaults.cardElevation(2.dp),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = statusMessage,
+                    color = contentColor,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                if (connectionType != "Sin conexión") {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "($connectionType)",
+                        color = contentColor.copy(alpha = 0.8f),
+                        fontSize = 12.sp
                     )
                 }
             }

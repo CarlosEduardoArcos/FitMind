@@ -5,5 +5,6 @@ data class Habito(
     val nombre: String,
     val categoria: String,
     val frecuencia: String,
-    val completado: Boolean = false
+    val completado: Boolean = false,
+    val usuarioId: String = ""
 )

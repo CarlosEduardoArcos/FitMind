@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -34,12 +35,19 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.DropdownMenuItem
+import com.example.fitmind.viewmodel.SettingsViewModel
+import com.example.fitmind.data.FirebaseRepository
 import com.example.fitmind.model.Habito
 import com.example.fitmind.viewmodel.HabitViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddHabitScreen(navController: NavController, habitViewModel: HabitViewModel) {
+fun AddHabitScreen(
+    navController: NavController, 
+    habitViewModel: HabitViewModel,
+    settingsViewModel: SettingsViewModel,
+    firebaseRepository: FirebaseRepository
+) {
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
@@ -47,6 +55,12 @@ fun AddHabitScreen(navController: NavController, habitViewModel: HabitViewModel)
     var categoryExpanded by remember { mutableStateOf(false) }
     var frequencyExpanded by remember { mutableStateOf(false) }
     var showCustomCategory by remember { mutableStateOf(false) }
+    
+    // Inicializar ViewModels con contexto
+    LaunchedEffect(Unit) {
+        settingsViewModel.initializeContext(context)
+        habitViewModel.initializeContext(context, settingsViewModel, firebaseRepository)
+    }
     
     // Categorías sugeridas
     val categories = listOf("Cardio", "Fuerza", "Yoga", "Meditación", "Estiramiento", "Aeróbica", "Nutrición", "Sueño", "Hidratación", "Otro")
