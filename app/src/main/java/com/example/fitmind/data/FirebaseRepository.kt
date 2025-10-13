@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
+import kotlinx.coroutines.tasks.await
 
 class FirebaseRepository {
     private val auth = FirebaseAuth.getInstance()
@@ -138,6 +139,31 @@ class FirebaseRepository {
                 Log.e("Firestore", "Error al eliminar hábito para UID: $uid", exception)
                 onResult(false) 
             }
+    }
+    
+    /**
+     * Elimina un hábito específico por ID desde Firebase
+     */
+    suspend fun deleteHabitFromFirebase(userId: String, habitId: String): Boolean {
+        return try {
+            Log.d("Firestore", "Eliminando hábito $habitId para usuario $userId")
+            
+            // Obtener todos los hábitos del usuario
+            val userDoc = db.collection("users").document(userId).get().await()
+            val habits = userDoc.get("habitos") as? List<Map<String, Any>> ?: emptyList()
+            
+            // Encontrar y eliminar el hábito específico
+            val updatedHabits = habits.filter { it["id"] != habitId }
+            
+            // Actualizar la lista en Firebase
+            db.collection("users").document(userId).update("habitos", updatedHabits).await()
+            
+            Log.d("Firestore", "Hábito $habitId eliminado exitosamente para usuario $userId")
+            true
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error al eliminar hábito $habitId para usuario $userId", e)
+            false
+        }
     }
 
     fun getAllUsers(onResult: (List<Pair<String, Map<String, Any>>>) -> Unit) {
@@ -474,6 +500,24 @@ class FirebaseRepository {
                 Log.e("Firestore", "Error al obtener usuarios para migración", exception)
                 onComplete(false, exception.message)
             }
+    }
+    
+    /**
+     * Obtiene todos los hábitos de un usuario desde Firebase
+     */
+    suspend fun getHabitsFromFirebase(userId: String): List<Map<String, Any>> {
+        return try {
+            Log.d("Firestore", "Obteniendo hábitos desde Firebase para usuario $userId")
+            
+            val userDoc = db.collection("users").document(userId).get().await()
+            val habits = userDoc.get("habitos") as? List<Map<String, Any>> ?: emptyList()
+            
+            Log.d("Firestore", "Hábitos obtenidos desde Firebase: ${habits.size} para usuario $userId")
+            habits
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error al obtener hábitos desde Firebase para usuario $userId", e)
+            emptyList()
+        }
     }
     
     /**

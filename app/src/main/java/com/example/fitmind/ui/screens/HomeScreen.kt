@@ -63,6 +63,7 @@ import com.example.fitmind.ui.utils.animatedScale
 import com.example.fitmind.ui.utils.animatedRotation
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.SettingsViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun HomeScreen(
@@ -74,8 +75,20 @@ fun HomeScreen(
     
     // Inicializar ViewModel con contexto
     LaunchedEffect(Unit) {
-        habitViewModel.initializeContext(context)
+        habitViewModel.initializeContext(context, settingsViewModel)
         settingsViewModel.initializeContext(context)
+        
+        // Ejecutar limpieza inicial automática
+        habitViewModel.executeInitialCleanup()
+        
+        // Limpiar hábitos obsoletos
+        habitViewModel.cleanObsoleteHabits()
+        
+        // Sincronizar hábitos desde Firebase si hay usuario autenticado
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            habitViewModel.syncHabitsFromFirebase()
+        }
     }
     
     // OPT: Manejo seguro de estado

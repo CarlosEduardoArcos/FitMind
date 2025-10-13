@@ -1,6 +1,7 @@
 package com.example.fitmind.viewmodel
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class HabitViewModel : ViewModel() {
     private var context: Context? = null
@@ -27,6 +29,9 @@ class HabitViewModel : ViewModel() {
     
     private val _pendingSyncHabits = MutableStateFlow<List<Habito>>(emptyList())
     val pendingSyncHabits: StateFlow<List<Habito>> = _pendingSyncHabits
+    
+    private val _pendingDeleteHabits = MutableStateFlow<List<String>>(emptyList())
+    val pendingDeleteHabits: StateFlow<List<String>> = _pendingDeleteHabits
 
     fun initializeContext(context: Context, settingsViewModel: SettingsViewModel? = null, firebaseRepository: FirebaseRepository? = null) {
         this.context = context
@@ -123,31 +128,38 @@ class HabitViewModel : ViewModel() {
                 // Siempre eliminar localmente primero
                 deleteHabitLocally(ctx, serializeHabito(hab))
                 
-                // Si está conectado y tiene Firebase, también eliminar de la nube
+                // Verificar si hay usuario autenticado
                 val currentUser = FirebaseAuth.getInstance().currentUser
                 val userId = currentUser?.uid
                 
-                if (userId != null && NetworkUtils.isInternetAvailable(ctx) && firebaseRepo != null) {
-                    try {
-                        val habitMap = mapOf(
-                            "id" to hab.id,
-                            "nombre" to hab.nombre,
-                            "categoria" to hab.categoria,
-                            "frecuencia" to hab.frecuencia,
-                            "completado" to hab.completado,
-                            "usuarioId" to userId
-                        )
-                        firebaseRepo.deleteHabit(userId, habitMap) { success ->
-                            // Si falla la eliminación en Firebase, no es crítico
-                            // El hábito ya fue eliminado localmente
+                if (userId != null) {
+                    if (NetworkUtils.isInternetAvailable(ctx) && firebaseRepo != null) {
+                        // Usuario autenticado con conexión - eliminar de Firebase
+                        try {
+                            val success = firebaseRepo.deleteHabitFromFirebase(userId, hab.id)
+                            if (success) {
+                                showToast(ctx, "✅ Hábito eliminado de la nube y localmente")
+                            } else {
+                                // Si falla Firebase, agregar a pendientes de eliminación
+                                addToPendingDelete(hab.id)
+                                showToast(ctx, "⚠️ Eliminado localmente. Se sincronizará la eliminación.")
+                            }
+                        } catch (e: Exception) {
+                            // Si hay error con Firebase, agregar a pendientes de eliminación
+                            addToPendingDelete(hab.id)
+                            showToast(ctx, "⚠️ Eliminado localmente. Se sincronizará la eliminación.")
                         }
-                    } catch (e: Exception) {
-                        // Si falla la eliminación en Firebase, no es crítico
-                        // El hábito ya fue eliminado localmente
+                    } else {
+                        // Usuario autenticado pero sin conexión - agregar a pendientes
+                        addToPendingDelete(hab.id)
+                        showToast(ctx, "⚠️ Sin conexión. Eliminado localmente.")
                     }
+                } else {
+                    // Usuario no autenticado (modo invitado) - solo local
+                    showToast(ctx, "🗑️ Hábito eliminado localmente (modo invitado)")
                 }
             } catch (e: Exception) {
-                showToast(ctx, "Error al eliminar el hábito.")
+                showToast(ctx, "❌ Error al eliminar el hábito")
             }
         }
     }
@@ -266,7 +278,7 @@ class HabitViewModel : ViewModel() {
             }.distinctUntilChanged().collect { shouldSync ->
                 // Solo sincronizar si hay usuario autenticado
                 val currentUser = FirebaseAuth.getInstance().currentUser
-                if (shouldSync && _pendingSyncHabits.value.isNotEmpty() && currentUser != null) {
+                if (shouldSync && (_pendingSyncHabits.value.isNotEmpty() || _pendingDeleteHabits.value.isNotEmpty()) && currentUser != null) {
                     syncPendingHabits()
                 }
             }
@@ -289,8 +301,8 @@ class HabitViewModel : ViewModel() {
                 return
             }
             
+            // Sincronizar hábitos pendientes de agregar
             val pendingHabits = _pendingSyncHabits.value.toList()
-            
             for (habit in pendingHabits) {
                 try {
                     val habitMap = mapOf(
@@ -313,12 +325,27 @@ class HabitViewModel : ViewModel() {
                 }
             }
             
-            if (pendingHabits.isNotEmpty()) {
-                showToast(ctx, "Hábitos locales sincronizados con la nube.")
+            // Sincronizar eliminaciones pendientes
+            val pendingDeletes = _pendingDeleteHabits.value.toList()
+            for (habitId in pendingDeletes) {
+                try {
+                    val success = firebaseRepo.deleteHabitFromFirebase(userId, habitId)
+                    if (success) {
+                        // Remover de la lista de eliminaciones pendientes
+                        _pendingDeleteHabits.value = _pendingDeleteHabits.value.filter { it != habitId }
+                    }
+                } catch (e: Exception) {
+                    // Si falla una eliminación específica, continuar con las demás
+                    continue
+                }
+            }
+            
+            if (pendingHabits.isNotEmpty() || pendingDeletes.isNotEmpty()) {
+                showToast(ctx, "🔄 Hábitos locales sincronizados con la nube.")
             }
         } catch (e: Exception) {
             // Error general en la sincronización
-            showToast(ctx, "Error al sincronizar hábitos.")
+            showToast(ctx, "❌ Error al sincronizar hábitos.")
         }
     }
     
@@ -327,6 +354,120 @@ class HabitViewModel : ViewModel() {
      */
     private fun addToPendingSync(habit: Habito) {
         _pendingSyncHabits.value = _pendingSyncHabits.value + habit
+    }
+    
+    /**
+     * Agrega un ID de hábito a la lista de eliminación pendiente
+     */
+    private fun addToPendingDelete(habitId: String) {
+        _pendingDeleteHabits.value = _pendingDeleteHabits.value + habitId
+    }
+    
+    /**
+     * Limpia hábitos obsoletos del almacenamiento local
+     */
+    suspend fun cleanObsoleteHabits(): Int {
+        val ctx = context ?: return 0
+        return try {
+            val cleanedCount = cleanObsoleteHabits(ctx)
+            if (cleanedCount > 0) {
+                Log.d("HabitViewModel", "🧹 Limpieza completada: $cleanedCount hábitos antiguos eliminados")
+                showToast(ctx, "🔄 Limpieza completada: $cleanedCount hábitos antiguos eliminados")
+            }
+            cleanedCount
+        } catch (e: Exception) {
+            Log.e("HabitViewModel", "Error al limpiar hábitos obsoletos", e)
+            showToast(ctx, "❌ Error al limpiar hábitos antiguos")
+            0
+        }
+    }
+    
+    /**
+     * Sincroniza hábitos desde Firebase al almacenamiento local
+     */
+    suspend fun syncHabitsFromFirebase(): Boolean {
+        val ctx = context ?: return false
+        val firebaseRepo = _firebaseRepository.value ?: return false
+        
+        return try {
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            val userId = currentUser?.uid
+            
+            if (userId == null || !NetworkUtils.isInternetAvailable(ctx)) {
+                return false
+            }
+            
+            Log.d("HabitViewModel", "🔄 Sincronizando hábitos desde Firebase para usuario $userId")
+            
+            // Obtener hábitos desde Firebase
+            val firebaseHabits = firebaseRepo.getHabitsFromFirebase(userId)
+            
+            // Convertir a objetos Habito
+            val firebaseHabitsList = firebaseHabits.mapNotNull { habitMap ->
+                try {
+                    Habito(
+                        id = habitMap["id"]?.toString() ?: "",
+                        nombre = habitMap["nombre"]?.toString() ?: "",
+                        categoria = habitMap["categoria"]?.toString() ?: "",
+                        frecuencia = habitMap["frecuencia"]?.toString() ?: "",
+                        completado = habitMap["completado"] as? Boolean ?: false,
+                        usuarioId = userId
+                    )
+                } catch (e: Exception) {
+                    Log.w("HabitViewModel", "Error al convertir hábito desde Firebase", e)
+                    null
+                }
+            }
+            
+            // Limpiar hábitos locales actuales
+            clearAllHabits(ctx)
+            
+            // Guardar hábitos de Firebase localmente
+            firebaseHabitsList.forEach { habit ->
+                saveHabitLocally(ctx, serializeHabito(habit))
+            }
+            
+            Log.d("HabitViewModel", "✅ Sincronización completada: ${firebaseHabitsList.size} hábitos sincronizados")
+            showToast(ctx, "🔄 Hábitos sincronizados desde la nube")
+            true
+        } catch (e: Exception) {
+            Log.e("HabitViewModel", "Error al sincronizar hábitos desde Firebase", e)
+            showToast(ctx, "❌ Error al sincronizar hábitos")
+            false
+        }
+    }
+    
+    /**
+     * Ejecuta limpieza temporal automática (solo una vez)
+     */
+    suspend fun executeInitialCleanup(): Boolean {
+        val ctx = context ?: return false
+        
+        return try {
+            // Verificar si ya se ejecutó la limpieza
+            val isCleanupDone = ctx.dataStore.data.map { prefs -> 
+                prefs[FitMindKeys.CLEANUP_DONE] ?: false 
+            }.first()
+            
+            if (isCleanupDone) {
+                return false // Ya se ejecutó
+            }
+            
+            Log.d("HabitViewModel", "🧹 Ejecutando limpieza inicial")
+            
+            // Ejecutar limpieza de hábitos obsoletos
+            val cleanedCount = cleanObsoleteHabits(ctx)
+            
+            // Marcar como completado
+            setCleanupDone(ctx)
+            
+            Log.d("HabitViewModel", "🧹 Limpieza inicial ejecutada: $cleanedCount hábitos antiguos eliminados")
+            showToast(ctx, "🧹 Limpieza inicial ejecutada: $cleanedCount hábitos antiguos eliminados")
+            true
+        } catch (e: Exception) {
+            Log.e("HabitViewModel", "Error en limpieza inicial", e)
+            false
+        }
     }
     
     /**
