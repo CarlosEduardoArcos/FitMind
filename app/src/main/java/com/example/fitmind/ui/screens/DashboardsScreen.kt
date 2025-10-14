@@ -144,44 +144,41 @@ fun DashboardsScreen(
         }
 
         // Contenido de las pestañas con fondo degradado
-        Surface(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            color = Color.Transparent
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF3A86FF),
-                                Color(0xFF06D6A0)
-                            ),
-                            startY = 0f,
-                            endY = Float.POSITIVE_INFINITY
-                        )
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF3A86FF),
+                            Color(0xFF06D6A0)
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
                     )
-            ) {
-                when (selectedTabIndex) {
-                    0 -> {
-                        // Sección Gráficos
-                        ChartsSection(
-                            habits = habits,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                    1 -> {
-                        // Sección Estadísticas
-                        StatisticsSection(
-                            habits = habits,
-                            completedHabits = completedHabits,
-                            totalHabits = totalHabits,
-                            progressPercentage = progressPercentage,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
+                )
+        ) {
+            when (selectedTabIndex) {
+                0 -> {
+                    // Sección Gráficos
+                    ChartsSection(
+                        habits = habits,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    )
+                }
+                1 -> {
+                    // Sección Estadísticas
+                    StatisticsSection(
+                        habits = habits,
+                        completedHabits = completedHabits,
+                        totalHabits = totalHabits,
+                        progressPercentage = progressPercentage,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    )
                 }
             }
         }
@@ -213,7 +210,7 @@ fun ChartsSection(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
