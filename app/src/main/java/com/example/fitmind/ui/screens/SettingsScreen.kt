@@ -28,6 +28,9 @@ import com.example.fitmind.ui.utils.InteractionFeedback
 import com.example.fitmind.ui.utils.rememberInteractionFeedback
 import com.example.fitmind.ui.components.SessionIndicator
 import com.example.fitmind.ui.components.GuestModeIndicator
+import com.example.fitmind.ui.components.SessionBar
+import com.example.fitmind.ui.components.UserMenu
+import com.google.firebase.auth.FirebaseAuth
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.NotificationViewModel
@@ -76,6 +79,7 @@ fun SettingsScreen(
     var showNotificationFields by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var selectedHabit by remember { mutableStateOf("") }
+    var showUserMenu by remember { mutableStateOf(false) }
     var selectedTime by remember { mutableStateOf("09:00") }
     var expanded by remember { mutableStateOf(false) }
     
@@ -160,18 +164,14 @@ fun SettingsScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // 👤 Indicador de Sesión Activa
-            val currentUser by authViewModel.currentUser.collectAsState()
-            if (currentUser != null) {
-                SessionIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    showAdminBadge = true
-                )
-            } else {
-                GuestModeIndicator(
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // SessionBar moderna
+            SessionBar(
+                onLogoutClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    navController.navigate("login")
+                },
+                onUserMenuClick = { showUserMenu = !showUserMenu }
+            )
 
             // 🔔 Sección de Notificaciones Moderna
             NotificationSettingsCard(
@@ -405,6 +405,24 @@ fun SettingsScreen(
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
+        )
+        
+        // UserMenu desplegable
+        UserMenu(
+            isExpanded = showUserMenu,
+            onDismiss = { showUserMenu = false },
+            onLogout = {
+                FirebaseAuth.getInstance().signOut()
+                navController.navigate("login")
+            },
+            onSwitchUser = {
+                FirebaseAuth.getInstance().signOut()
+                navController.navigate("login")
+            },
+            onProfile = {
+                // TODO: Implementar navegación al perfil
+                showUserMenu = false
+            }
         )
     }
 }

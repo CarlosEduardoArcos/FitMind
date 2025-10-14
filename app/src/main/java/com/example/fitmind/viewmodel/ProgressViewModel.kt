@@ -29,6 +29,12 @@ class ProgressViewModel : ViewModel() {
     private val _hasData = MutableStateFlow(false)
     val hasData: StateFlow<Boolean> = _hasData.asStateFlow()
     
+    private val _isUpdating = MutableStateFlow(false)
+    val isUpdating: StateFlow<Boolean> = _isUpdating.asStateFlow()
+    
+    private val _lastUpdateTime = MutableStateFlow(System.currentTimeMillis())
+    val lastUpdateTime: StateFlow<Long> = _lastUpdateTime.asStateFlow()
+    
     fun initializeContext(context: Context, userId: String? = null, firebaseRepository: FirebaseRepository? = null) {
         this.context = context
         this.userId = userId
@@ -50,15 +56,21 @@ class ProgressViewModel : ViewModel() {
         
         viewModelScope.launch {
             try {
-                repo.getHabits(uid) { habitsList ->
+                _isUpdating.value = true
+                
+                // Usar listener en tiempo real para actualizaciones automáticas
+                repo.getHabitsRealtime(uid) { habitsList ->
                     val habits = habitsList.map { habitMap ->
                         convertMapToHabito(habitMap)
                     }
                     calculateMetrics(habits)
+                    _lastUpdateTime.value = System.currentTimeMillis()
+                    _isUpdating.value = false
                 }
             } catch (e: Exception) {
                 // Si hay error, inicializar con métricas vacías
                 initializeEmptyMetrics()
+                _isUpdating.value = false
             }
         }
     }

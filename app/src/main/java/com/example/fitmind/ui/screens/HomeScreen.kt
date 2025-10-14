@@ -63,6 +63,8 @@ import com.example.fitmind.ui.utils.animatedScale
 import com.example.fitmind.ui.utils.animatedRotation
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.SettingsViewModel
+import com.example.fitmind.ui.components.SessionBar
+import com.example.fitmind.ui.components.UserMenu
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -96,6 +98,7 @@ fun HomeScreen(
     val appModeStatus by settingsViewModel.appModeStatus.collectAsState()
     val connectionType by settingsViewModel.connectionType.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    var showUserMenu by remember { mutableStateOf(false) }
     
     // Sistema de feedback interactivo
     val interactionFeedback = rememberInteractionFeedback()
@@ -111,17 +114,27 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(gradient)
-            .padding(16.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
             // Indicador de estado de conexión
             ConnectionStatusIndicator(
                 appModeStatus = appModeStatus,
                 connectionType = connectionType,
                 modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+            )
+            
+            // SessionBar moderna
+            SessionBar(
+                onLogoutClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    navController.navigate("login")
+                },
+                onUserMenuClick = { showUserMenu = !showUserMenu }
             )
             
             Text(
@@ -202,6 +215,24 @@ fun HomeScreen(
             dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Cancelar") } },
             title = { Text("Eliminar hábito") },
             text = { Text("¿Seguro que quieres eliminar '${habitToDelete!!.nombre}'?") }
+        )
+        
+        // UserMenu desplegable
+        UserMenu(
+            isExpanded = showUserMenu,
+            onDismiss = { showUserMenu = false },
+            onLogout = {
+                FirebaseAuth.getInstance().signOut()
+                navController.navigate("login")
+            },
+            onSwitchUser = {
+                FirebaseAuth.getInstance().signOut()
+                navController.navigate("login")
+            },
+            onProfile = {
+                // TODO: Implementar navegación al perfil
+                showUserMenu = false
+            }
         )
     }
 }

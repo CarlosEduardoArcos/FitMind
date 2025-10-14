@@ -135,6 +135,31 @@ class FirebaseRepository {
             }
         }
     }
+    
+    /**
+     * Obtiene hábitos en tiempo real con listener activo para estadísticas
+     */
+    fun getHabitsRealtime(uid: String, onResult: (List<Map<String, Any>>) -> Unit) {
+        Log.d("Firestore", "Iniciando listener en tiempo real para hábitos del usuario UID: $uid")
+        
+        db.collection("users").document(uid).addSnapshotListener { document, exception ->
+            if (exception != null) {
+                Log.e("Firestore", "Error en listener tiempo real para UID: $uid", exception)
+                onResult(emptyList())
+                return@addSnapshotListener
+            }
+            
+            if (document != null && document.exists()) {
+                @Suppress("UNCHECKED_CAST")
+                val habits = document.get("habitos") as? List<Map<String, Any>> ?: emptyList()
+                Log.d("Firestore", "📊 Actualización tiempo real: ${habits.size} hábitos para UID: $uid")
+                onResult(habits)
+            } else {
+                Log.w("Firestore", "Documento no encontrado en tiempo real para UID: $uid")
+                onResult(emptyList())
+            }
+        }
+    }
 
     fun deleteHabit(uid: String, habit: Map<String, Any>, onResult: (Boolean) -> Unit) {
         Log.d("Firestore", "Eliminando hábito para usuario UID: $uid")
