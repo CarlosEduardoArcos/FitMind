@@ -65,6 +65,8 @@ import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.SettingsViewModel
 import com.example.fitmind.ui.components.SessionBar
 import com.example.fitmind.ui.components.UserMenu
+import com.example.fitmind.ui.components.WelcomeMessage
+import com.example.fitmind.ui.components.WelcomeMessageWithProgress
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -100,6 +102,15 @@ fun HomeScreen(
     var showDialog by remember { mutableStateOf(false) }
     var showUserMenu by remember { mutableStateOf(false) }
     
+    // Estado del usuario para el mensaje de bienvenida
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val isGuestMode = currentUser == null
+    val userName = currentUser?.displayName ?: currentUser?.email?.substringBefore("@") ?: "Usuario"
+    
+    // Calcular progreso diario (opcional)
+    val completedHabits = habits.count { it.completado }
+    val progressPercentage = if (habits.isNotEmpty()) completedHabits.toFloat() / habits.size else 0f
+    
     // Sistema de feedback interactivo
     val interactionFeedback = rememberInteractionFeedback()
     var habitToDelete by remember { mutableStateOf<Habito?>(null) }
@@ -121,12 +132,21 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Indicador de estado de conexión
-            ConnectionStatusIndicator(
-                appModeStatus = appModeStatus,
-                connectionType = connectionType,
-                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
-            )
+            // Mensaje de bienvenida temporal
+            if (!isGuestMode) {
+                WelcomeMessageWithProgress(
+                    userName = userName,
+                    isGuestMode = isGuestMode,
+                    progressPercentage = progressPercentage,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+                )
+            } else {
+                WelcomeMessage(
+                    userName = userName,
+                    isGuestMode = isGuestMode,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+                )
+            }
             
             // SessionBar moderna
             SessionBar(
@@ -352,74 +372,5 @@ fun HabitCard(
     }
 }
 
-/**
- * Componente para mostrar el estado de conexión
- */
-@Composable
-fun ConnectionStatusIndicator(
-    appModeStatus: com.example.fitmind.viewmodel.AppModeStatus,
-    connectionType: String,
-    modifier: Modifier = Modifier
-) {
-    val statusMessage = when (appModeStatus) {
-        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> "🟢 Conectado (modo online)"
-        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> "🔴 Sin conexión (modo local temporal)"
-        com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> "🔴 Modo sin conexión"
-    }
-    
-    val backgroundColor = when (appModeStatus) {
-        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> 
-            MaterialTheme.colorScheme.primaryContainer
-        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> 
-            MaterialTheme.colorScheme.errorContainer
-        com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> 
-            MaterialTheme.colorScheme.surfaceVariant
-    }
-    
-    val contentColor = when (appModeStatus) {
-        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> 
-            MaterialTheme.colorScheme.onPrimaryContainer
-        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> 
-            MaterialTheme.colorScheme.onErrorContainer
-        com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> 
-            MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    
-    AnimatedVisibility(
-        visible = true,
-        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
-        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
-        modifier = modifier
-    ) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = backgroundColor),
-            elevation = CardDefaults.cardElevation(2.dp),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = statusMessage,
-                    color = contentColor,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                if (connectionType != "Sin conexión") {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "($connectionType)",
-                        color = contentColor.copy(alpha = 0.8f),
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-    }
-}
 
 

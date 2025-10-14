@@ -41,8 +41,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import com.example.fitmind.ui.components.CircularProgressIndicator
 import com.example.fitmind.ui.components.MetricCardWithCircularProgress
+import com.example.fitmind.ui.components.ChartView
+import com.example.fitmind.ui.components.StatsTile
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.ProgressViewModel
@@ -80,6 +84,12 @@ fun DashboardsScreen(
     val hasData by progressViewModel.hasData.collectAsState()
     val isUpdating by progressViewModel.isUpdating.collectAsState()
     val lastUpdateTime by progressViewModel.lastUpdateTime.collectAsState()
+    
+    // Observar hábitos para estadísticas
+    val habits by habitViewModel.habits.collectAsState()
+    val completedHabits = habits.count { it.completado }
+    val totalHabits = habits.size
+    val progressPercentage = if (totalHabits > 0) completedHabits.toFloat() / totalHabits else 0f
     
     var showUserMenu by remember { mutableStateOf(false) }
 
@@ -146,8 +156,8 @@ fun DashboardsScreen(
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFF1E3C72),
-                                Color(0xFF2A5298)
+                                Color(0xFF3A86FF),
+                                Color(0xFF06D6A0)
                             ),
                             startY = 0f,
                             endY = Float.POSITIVE_INFINITY
@@ -157,11 +167,20 @@ fun DashboardsScreen(
                 when (selectedTabIndex) {
                     0 -> {
                         // Sección Gráficos
-                        Text("Sección de Gráficos - En desarrollo", color = Color.White)
+                        ChartsSection(
+                            habits = habits,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
                     1 -> {
                         // Sección Estadísticas
-                        Text("Sección de Estadísticas - En desarrollo", color = Color.White)
+                        StatisticsSection(
+                            habits = habits,
+                            completedHabits = completedHabits,
+                            totalHabits = totalHabits,
+                            progressPercentage = progressPercentage,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
                 }
             }
@@ -185,5 +204,184 @@ fun DashboardsScreen(
                 showUserMenu = false
             }
         )
+    }
+}
+
+@Composable
+fun ChartsSection(
+    habits: List<com.example.fitmind.model.Habito>,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (habits.isEmpty()) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+                elevation = CardDefaults.cardElevation(4.dp),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "Aún no hay datos de progreso.\nAgrega tus primeros hábitos para ver tus gráficos.",
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    color = Color(0xFF3A86FF),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        } else {
+            // Mostrar gráficos cuando hay datos
+            ChartView(data = habits.map { it.nombre })
+        }
+    }
+}
+
+@Composable
+fun StatisticsSection(
+    habits: List<com.example.fitmind.model.Habito>,
+    completedHabits: Int,
+    totalHabits: Int,
+    progressPercentage: Float,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (habits.isEmpty()) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+                elevation = CardDefaults.cardElevation(4.dp),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "No hay estadísticas disponibles.\nAgrega hábitos para ver tus estadísticas detalladas.",
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    color = Color(0xFF3A86FF),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        } else {
+            // Estadísticas de hábitos
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+                elevation = CardDefaults.cardElevation(4.dp),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "📊 Estadísticas de Hábitos",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF3A86FF),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    StatsTile(
+                        icon = Icons.Default.CheckCircle,
+                        title = "Hábitos Completados",
+                        value = "$completedHabits/$totalHabits",
+                        progress = progressPercentage
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    StatsTile(
+                        icon = Icons.Default.TrendingUp,
+                        title = "Progreso General",
+                        value = "${(progressPercentage * 100).toInt()}%",
+                        progress = progressPercentage
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    StatsTile(
+                        icon = Icons.Default.Favorite,
+                        title = "Hábitos Activos",
+                        value = "$totalHabits hábitos",
+                        progress = if (totalHabits > 0) 1f else 0f
+                    )
+                }
+            }
+            
+            // Métricas fitness adicionales (opcional)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+                elevation = CardDefaults.cardElevation(4.dp),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "💪 Métricas Fitness",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF06D6A0),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    StatsTile(
+                        icon = Icons.Default.Favorite,
+                        title = "Frecuencia Cardíaca",
+                        value = "0/100 bpm",
+                        progress = 0.3f
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    StatsTile(
+                        icon = Icons.Default.Timer,
+                        title = "Tiempo de Calentamiento",
+                        value = "0/10 min",
+                        progress = 0.5f
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    StatsTile(
+                        icon = Icons.Default.DirectionsWalk,
+                        title = "Pasos Diarios",
+                        value = "0/8000",
+                        progress = 0.2f
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    StatsTile(
+                        icon = Icons.Default.LocalFireDepartment,
+                        title = "Calorías Quemadas",
+                        value = "0/250 kcal",
+                        progress = 0.4f
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    StatsTile(
+                        icon = Icons.Default.DirectionsRun,
+                        title = "Distancia Recorrida",
+                        value = "0/5 km",
+                        progress = 0.1f
+                    )
+                }
+            }
+        }
     }
 }
