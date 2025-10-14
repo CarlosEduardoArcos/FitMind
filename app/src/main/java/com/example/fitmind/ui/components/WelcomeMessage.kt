@@ -111,16 +111,20 @@ fun WelcomeMessageWithProgress(
         modifier = modifier
     ) {
         Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(top = 8.dp)
+                .background(
+                    Color.Black.copy(alpha = 0.25f), 
+                    RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 10.dp, vertical = 6.dp)
         ) {
-            // Mensaje de bienvenida con fondo translúcido y sombra
+            // Mensaje de bienvenida compacto
             Text(
-                text = "👋 Bienvenido, ${if (isGuestMode) "Invitado" else userName}\nHoy es $currentDate",
-                style = MaterialTheme.typography.headlineSmall.copy(
+                text = "👋 Bienvenido, ${if (isGuestMode) "Invitado" else userName}",
+                style = MaterialTheme.typography.titleMedium.copy(
                     color = Color.White,
                     shadow = Shadow(
                         color = Color.Black.copy(alpha = 0.6f),
@@ -128,47 +132,41 @@ fun WelcomeMessageWithProgress(
                         blurRadius = 6f
                     )
                 ),
-                modifier = Modifier
-                    .background(
-                        Color.Black.copy(alpha = 0.25f), 
-                        RoundedCornerShape(12.dp)
-                    )
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            
+            // Fecha actual en texto más pequeño y discreto
+            Text(
+                text = currentDate,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = Color.White.copy(alpha = 0.9f)
+                ),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             
             if (!isGuestMode) {
-                // Indicador de progreso con fondo translúcido
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Indicador de progreso compacto
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .background(
-                            Color.Black.copy(alpha = 0.25f), 
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     CircularProgressIndicator(
                         progress = { animatedProgress },
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(16.dp),
                         color = Color(0xFF06D6A0),
                         strokeWidth = 2.dp,
                         strokeCap = StrokeCap.Round,
                         trackColor = Color.White.copy(alpha = 0.3f)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "${(progressPercentage * 100).toInt()}% completado",
+                        text = "${(progressPercentage * 100).toInt()}%",
                         style = TextStyle(
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            shadow = Shadow(
-                                color = Color.Black.copy(alpha = 0.5f),
-                                offset = androidx.compose.ui.geometry.Offset(1f, 1f),
-                                blurRadius = 3f
-                            )
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     )
                 }
