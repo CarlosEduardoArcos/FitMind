@@ -303,7 +303,7 @@ fun StatisticsSection(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     StatsTile(
-                        icon = Icons.Default.TrendingUp,
+                        icon = Icons.Default.Star,
                         title = "Progreso General",
                         value = "${(progressPercentage * 100).toInt()}%",
                         progress = progressPercentage
@@ -348,7 +348,7 @@ fun StatisticsSection(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     StatsTile(
-                        icon = Icons.Default.Timer,
+                        icon = Icons.Default.Settings,
                         title = "Tiempo de Calentamiento",
                         value = "0/10 min",
                         progress = 0.5f
@@ -357,7 +357,7 @@ fun StatisticsSection(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     StatsTile(
-                        icon = Icons.Default.DirectionsWalk,
+                        icon = Icons.Default.Person,
                         title = "Pasos Diarios",
                         value = "0/8000",
                         progress = 0.2f
@@ -366,7 +366,7 @@ fun StatisticsSection(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     StatsTile(
-                        icon = Icons.Default.LocalFireDepartment,
+                        icon = Icons.Default.Star,
                         title = "Calorías Quemadas",
                         value = "0/250 kcal",
                         progress = 0.4f
@@ -375,7 +375,7 @@ fun StatisticsSection(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     StatsTile(
-                        icon = Icons.Default.DirectionsRun,
+                        icon = Icons.Default.Place,
                         title = "Distancia Recorrida",
                         value = "0/5 km",
                         progress = 0.1f
