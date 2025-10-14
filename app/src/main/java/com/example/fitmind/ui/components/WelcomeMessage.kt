@@ -88,9 +88,9 @@ fun WelcomeMessageWithProgress(
         label = "progress"
     )
     
-    // Auto-hide después de 4 segundos
+    // Auto-hide después de 3 segundos
     LaunchedEffect(Unit) {
-        delay(4000)
+        delay(3000)
         isVisible = false
     }
     
@@ -100,66 +100,66 @@ fun WelcomeMessageWithProgress(
         exit = fadeOut(animationSpec = tween(1000)),
         modifier = modifier
     ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = Color.Black.copy(alpha = 0.8f)
-            ),
-            elevation = CardDefaults.cardElevation(6.dp),
-            shape = RoundedCornerShape(16.dp),
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            // Mensaje de bienvenida simple y limpio
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                // Línea principal con nombre y progreso
+                Text(
+                    text = "👋 Bienvenido, ${if (isGuestMode) "Invitado" else userName}",
+                    color = Color(0xFF3A86FF),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                // Badge de admin si es necesario
+                if (userRole == "admin") {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "⭐",
+                        fontSize = 14.sp
+                    )
+                }
+            }
+            
+            if (!isGuestMode) {
+                // Indicador circular de progreso discreto
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "👋 Bienvenido, $userName",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        
-                        // Badge de admin si es necesario
-                        if (userRole == "admin") {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "⭐",
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-                    
-                    if (!isGuestMode) {
-                        // Indicador circular de progreso moderno
-                        CircularProgressIndicator(
-                            progress = { animatedProgress },
-                            modifier = Modifier.size(36.dp),
-                            color = Color(0xFF06D6A0),
-                            strokeWidth = 3.dp,
-                            strokeCap = StrokeCap.Round,
-                            trackColor = Color.White.copy(alpha = 0.3f)
-                        )
-                    }
+                    CircularProgressIndicator(
+                        progress = { animatedProgress },
+                        modifier = Modifier.size(24.dp),
+                        color = Color(0xFF06D6A0),
+                        strokeWidth = 2.dp,
+                        strokeCap = StrokeCap.Round,
+                        trackColor = Color(0xFF3A86FF).copy(alpha = 0.3f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${(progressPercentage * 100).toInt()}% completado hoy",
+                        color = Color(0xFF06D6A0),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal
+                    )
                 }
-                
-                // Estado de sesión
-                Text(
-                    text = if (isGuestMode) "Modo invitado" else sessionStatus,
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal
-                )
             }
+            
+            // Estado de sesión discreto
+            Text(
+                text = if (isGuestMode) "Modo invitado" else sessionStatus,
+                color = Color(0xFF3A86FF).copy(alpha = 0.7f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Normal
+            )
         }
     }
 }

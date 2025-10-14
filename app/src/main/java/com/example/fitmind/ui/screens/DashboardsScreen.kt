@@ -259,18 +259,19 @@ fun StatisticsSection(
     progressPercentage: Float,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        if (habits.isEmpty()) {
+    if (habits.isEmpty()) {
+        // Mensaje centrado cuando no hay datos
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center
+        ) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
                 elevation = CardDefaults.cardElevation(4.dp),
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(24.dp)
             ) {
                 Text(
                     text = "No hay estadísticas disponibles.\nAgrega hábitos para ver tus estadísticas detalladas.",
@@ -283,112 +284,124 @@ fun StatisticsSection(
                     fontWeight = FontWeight.Medium
                 )
             }
-        } else {
-            // Estadísticas de hábitos
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
-                elevation = CardDefaults.cardElevation(4.dp),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+        }
+    } else {
+        // Contenido con scroll cuando hay datos
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                // Estadísticas de hábitos
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "📊 Estadísticas de Hábitos",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF3A86FF),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    StatsTile(
-                        icon = Icons.Default.CheckCircle,
-                        title = "Hábitos Completados",
-                        value = "$completedHabits/$totalHabits",
-                        progress = progressPercentage
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    StatsTile(
-                        icon = Icons.Default.Star,
-                        title = "Progreso General",
-                        value = "${(progressPercentage * 100).toInt()}%",
-                        progress = progressPercentage
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    StatsTile(
-                        icon = Icons.Default.Favorite,
-                        title = "Hábitos Activos",
-                        value = "$totalHabits hábitos",
-                        progress = if (totalHabits > 0) 1f else 0f
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "📊 Estadísticas de Hábitos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF3A86FF),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                        
+                        StatsTile(
+                            icon = Icons.Default.CheckCircle,
+                            title = "Hábitos Completados",
+                            value = "$completedHabits/$totalHabits",
+                            progress = progressPercentage
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        StatsTile(
+                            icon = Icons.Default.Star,
+                            title = "Progreso General",
+                            value = "${(progressPercentage * 100).toInt()}%",
+                            progress = progressPercentage
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        StatsTile(
+                            icon = Icons.Default.Favorite,
+                            title = "Hábitos Activos",
+                            value = "$totalHabits hábitos",
+                            progress = if (totalHabits > 0) 1f else 0f
+                        )
+                    }
                 }
             }
             
-            // Métricas fitness adicionales (opcional)
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
-                elevation = CardDefaults.cardElevation(4.dp),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+            item {
+                // Métricas fitness adicionales (opcional)
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "💪 Métricas Fitness",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF06D6A0),
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    StatsTile(
-                        icon = Icons.Default.Favorite,
-                        title = "Frecuencia Cardíaca",
-                        value = "0/100 bpm",
-                        progress = 0.3f
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    StatsTile(
-                        icon = Icons.Default.Settings,
-                        title = "Tiempo de Calentamiento",
-                        value = "0/10 min",
-                        progress = 0.5f
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    StatsTile(
-                        icon = Icons.Default.Person,
-                        title = "Pasos Diarios",
-                        value = "0/8000",
-                        progress = 0.2f
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    StatsTile(
-                        icon = Icons.Default.Star,
-                        title = "Calorías Quemadas",
-                        value = "0/250 kcal",
-                        progress = 0.4f
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    StatsTile(
-                        icon = Icons.Default.Place,
-                        title = "Distancia Recorrida",
-                        value = "0/5 km",
-                        progress = 0.1f
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "💪 Métricas Fitness",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF06D6A0),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                        
+                        StatsTile(
+                            icon = Icons.Default.Favorite,
+                            title = "Frecuencia Cardíaca",
+                            value = "0/100 bpm",
+                            progress = 0.3f
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        StatsTile(
+                            icon = Icons.Default.Settings,
+                            title = "Tiempo de Calentamiento",
+                            value = "0/10 min",
+                            progress = 0.5f
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        StatsTile(
+                            icon = Icons.Default.Person,
+                            title = "Pasos Diarios",
+                            value = "0/8000",
+                            progress = 0.2f
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        StatsTile(
+                            icon = Icons.Default.Star,
+                            title = "Calorías Quemadas",
+                            value = "0/250 kcal",
+                            progress = 0.4f
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        StatsTile(
+                            icon = Icons.Default.Place,
+                            title = "Distancia Recorrida",
+                            value = "0/5 km",
+                            progress = 0.1f
+                        )
+                    }
                 }
             }
         }
