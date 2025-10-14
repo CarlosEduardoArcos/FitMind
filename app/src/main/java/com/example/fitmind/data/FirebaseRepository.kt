@@ -82,6 +82,18 @@ class FirebaseRepository {
             }
     }
 
+    fun updateUserRole(uid: String, role: String) {
+        Log.d("Firestore", "Actualizando rol a '$role' para usuario UID: $uid")
+        
+        db.collection("users").document(uid).update("rol", role)
+            .addOnSuccessListener {
+                Log.d("Firestore", "Rol actualizado exitosamente a '$role' para UID: $uid")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Firestore", "Error al actualizar rol para UID: $uid", exception)
+            }
+    }
+
     fun addHabit(uid: String, habit: Map<String, Any>, onResult: (Boolean, String?) -> Unit) {
         Log.d("Firestore", "Agregando hábito para usuario UID: $uid")
         

@@ -43,21 +43,31 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import com.example.fitmind.ui.components.CircularProgressIndicator
 import com.example.fitmind.ui.components.MetricCardWithCircularProgress
+import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.ProgressViewModel
+import com.example.fitmind.data.FirebaseRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardsScreen(
     navController: NavController, 
     habitViewModel: HabitViewModel,
-    progressViewModel: ProgressViewModel
+    progressViewModel: ProgressViewModel,
+    authViewModel: AuthViewModel? = null,
+    firebaseRepository: FirebaseRepository? = null
 ) {
     val context = LocalContext.current
     
     // Inicializar ViewModels con contexto
     LaunchedEffect(Unit) {
-        progressViewModel.initializeContext(context)
+        val userId: String? = authViewModel?.getCurrentUserId()
+        val repo: FirebaseRepository? = firebaseRepository
+        if (userId != null && repo != null) {
+            progressViewModel.initializeContext(context, userId, repo)
+        } else {
+            progressViewModel.initializeContext(context)
+        }
     }
     
     var selectedTabIndex by remember { mutableStateOf(0) }

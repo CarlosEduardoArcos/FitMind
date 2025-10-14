@@ -3,6 +3,7 @@ package com.example.fitmind.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.fitmind.data.FirebaseRepository
 import com.example.fitmind.data.local.getLocalHabitsFlow
 import com.example.fitmind.data.model.ProgressMetrics
 import com.example.fitmind.model.Habito
@@ -19,6 +20,8 @@ import kotlin.random.Random
  */
 class ProgressViewModel : ViewModel() {
     private var context: Context? = null
+    private var firebaseRepository: FirebaseRepository? = null
+    private var userId: String? = null
     
     private val _progressMetrics = MutableStateFlow(ProgressMetrics())
     val progressMetrics: StateFlow<ProgressMetrics> = _progressMetrics.asStateFlow()
@@ -26,9 +29,38 @@ class ProgressViewModel : ViewModel() {
     private val _hasData = MutableStateFlow(false)
     val hasData: StateFlow<Boolean> = _hasData.asStateFlow()
     
-    fun initializeContext(context: Context) {
+    fun initializeContext(context: Context, userId: String? = null, firebaseRepository: FirebaseRepository? = null) {
         this.context = context
-        observeHabitsAndCalculateMetrics()
+        this.userId = userId
+        this.firebaseRepository = firebaseRepository
+        
+        if (userId != null && firebaseRepository != null) {
+            observeFirebaseHabitsAndCalculateMetrics()
+        } else {
+            observeHabitsAndCalculateMetrics()
+        }
+    }
+    
+    /**
+     * Observa los hábitos de Firebase en tiempo real y calcula las métricas automáticamente
+     */
+    private fun observeFirebaseHabitsAndCalculateMetrics() {
+        val uid = userId ?: return
+        val repo = firebaseRepository ?: return
+        
+        viewModelScope.launch {
+            try {
+                repo.getHabits(uid) { habitsList ->
+                    val habits = habitsList.map { habitMap ->
+                        convertMapToHabito(habitMap)
+                    }
+                    calculateMetrics(habits)
+                }
+            } catch (e: Exception) {
+                // Si hay error, inicializar con métricas vacías
+                initializeEmptyMetrics()
+            }
+        }
     }
     
     /**
@@ -45,18 +77,25 @@ class ProgressViewModel : ViewModel() {
                     }
             } catch (e: Exception) {
                 // Si hay error, inicializar con métricas vacías
-                _progressMetrics.value = ProgressMetrics(
-                    totalHabits = 0,
-                    completedHabits = 0,
-                    completionPercentage = 0f,
-                    steps = 0,
-                    calories = 0,
-                    kilometers = 0f, // OPT: Cambiar de Double a Float
-                    heartRate = 0
-                )
-                _hasData.value = false
+                initializeEmptyMetrics()
             }
         }
+    }
+    
+    /**
+     * Inicializa métricas vacías
+     */
+    private fun initializeEmptyMetrics() {
+        _progressMetrics.value = ProgressMetrics(
+            totalHabits = 0,
+            completedHabits = 0,
+            completionPercentage = 0f,
+            steps = 0,
+            calories = 0,
+            kilometers = 0f,
+            heartRate = 0
+        )
+        _hasData.value = false
     }
     
     /**
@@ -149,6 +188,24 @@ class ProgressViewModel : ViewModel() {
         val activityIncrease = activeHabits.size * 5
         
         return minOf(baseHeartRate + activityIncrease, 120)
+    }
+    
+    /**
+     * Convierte un Map de Firebase a objeto Habito
+     */
+    private fun convertMapToHabito(habitMap: Map<String, Any>): Habito {
+        return try {
+            val id = habitMap["id"] as? String ?: ""
+            val nombre = habitMap["nombre"] as? String ?: ""
+            val categoria = habitMap["categoria"] as? String ?: ""
+            val frecuencia = habitMap["frecuencia"] as? String ?: ""
+            val completado = habitMap["completado"] as? Boolean ?: false
+            
+            Habito(id, nombre, categoria, frecuencia, completado)
+        } catch (e: Exception) {
+            // Si hay error en conversión, retornar hábito vacío
+            Habito("", "", "", "", false)
+        }
     }
     
     /**

@@ -36,11 +36,16 @@ class SettingsViewModel : ViewModel() {
     private val _appModeStatus = MutableStateFlow(AppModeStatus.ONLINE_CONNECTED)
     val appModeStatus: StateFlow<AppModeStatus> = _appModeStatus.asStateFlow()
     
+    // Estado para el tema oscuro
+    private val _darkTheme = MutableStateFlow(false)
+    val darkTheme: StateFlow<Boolean> = _darkTheme.asStateFlow()
+    
     // DataStore para persistir la preferencia del usuario
     private lateinit var dataStore: DataStore<Preferences>
     
     companion object {
         private val ONLINE_MODE_KEY = booleanPreferencesKey("online_mode_enabled")
+        private val DARK_THEME_KEY = booleanPreferencesKey("dark_theme_enabled")
         private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
     }
     
@@ -85,10 +90,13 @@ class SettingsViewModel : ViewModel() {
             try {
                 val preferences = dataStore.data.first()
                 val savedOnlineMode = preferences[ONLINE_MODE_KEY] ?: true
+                val savedDarkTheme = preferences[DARK_THEME_KEY] ?: false
                 _isOnlineModeEnabled.value = savedOnlineMode
+                _darkTheme.value = savedDarkTheme
             } catch (e: Exception) {
-                // Si hay error, usar valor por defecto
+                // Si hay error, usar valores por defecto
                 _isOnlineModeEnabled.value = true
+                _darkTheme.value = false
             }
         }
     }
@@ -120,6 +128,26 @@ class SettingsViewModel : ViewModel() {
             } catch (e: Exception) {
                 // En caso de error, revertir el cambio
                 _isOnlineModeEnabled.value = !enabled
+            }
+        }
+    }
+    
+    /**
+     * Cambia el tema de la aplicación (oscuro/claro)
+     */
+    fun toggleDarkTheme() {
+        viewModelScope.launch {
+            try {
+                val newDarkTheme = !_darkTheme.value
+                _darkTheme.value = newDarkTheme
+                
+                // Guardar la preferencia
+                dataStore.edit { preferences ->
+                    preferences[DARK_THEME_KEY] = newDarkTheme
+                }
+            } catch (e: Exception) {
+                // En caso de error, revertir el cambio
+                _darkTheme.value = !_darkTheme.value
             }
         }
     }

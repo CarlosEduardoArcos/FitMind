@@ -114,7 +114,20 @@ class AuthViewModel : ViewModel() {
     private fun loadUserRole(uid: String) {
         viewModelScope.launch {
             repo.getUserRole(uid) { role ->
-                _userRole.value = role
+                // Si el usuario es carloeduardo1987@gmail.com, asegurar que tenga rol admin
+                val currentUserEmail = auth?.currentUser?.email
+                val finalRole = if (currentUserEmail == "carloeduardo1987@gmail.com") {
+                    "admin"
+                } else {
+                    role ?: "usuario"
+                }
+                
+                _userRole.value = finalRole
+                
+                // Si es admin pero no está en Firestore, actualizar Firestore
+                if (finalRole == "admin" && role != "admin" && currentUserEmail == "carloeduardo1987@gmail.com") {
+                    repo.updateUserRole(uid, "admin")
+                }
             }
         }
     }
@@ -123,12 +136,12 @@ class AuthViewModel : ViewModel() {
         return _userRole.value == "admin"
     }
 
-    fun isUser(): Boolean {
-        return _userRole.value == "usuario"
-    }
-
     fun getCurrentUserId(): String? {
         return _currentUser.value?.uid
+    }
+
+    fun isUser(): Boolean {
+        return _userRole.value == "usuario"
     }
     
     /**

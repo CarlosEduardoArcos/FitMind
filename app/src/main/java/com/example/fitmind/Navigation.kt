@@ -90,7 +90,9 @@ fun AppNavigation(
                     DashboardsScreen(
                         navController, 
                         habitViewModel,
-                        progressViewModel
+                        progressViewModel,
+                        authViewModel,
+                        firebaseRepository
                     ) 
                 }
                 composable("settings") {
