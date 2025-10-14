@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -209,17 +211,18 @@ fun ChartsSection(
     habits: List<com.example.fitmind.model.Habito>,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier,
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        contentAlignment = Alignment.Center
     ) {
         if (habits.isEmpty()) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
                 elevation = CardDefaults.cardElevation(4.dp),
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(24.dp)
             ) {
                 Text(
                     text = "Aún no hay datos de progreso.\nAgrega tus primeros hábitos para ver tus gráficos.",
@@ -234,7 +237,16 @@ fun ChartsSection(
             }
         } else {
             // Mostrar gráficos cuando hay datos
-            ChartView(data = habits.map { it.nombre })
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    ChartView(data = habits.map { it.nombre })
+                }
+            }
         }
     }
 }

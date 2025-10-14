@@ -385,9 +385,7 @@ fun SettingsScreen(
                                popUpTo("settings") { inclusive = true }
                            }
                        },
-                       modifier = Modifier
-                           .fillMaxWidth()
-                           .padding(bottom = 16.dp), // Padding extra para asegurar visibilidad
+                       modifier = Modifier.fillMaxWidth(),
                        colors = ButtonDefaults.buttonColors(
                            containerColor = MaterialTheme.colorScheme.error,
                            contentColor = MaterialTheme.colorScheme.onError
@@ -400,6 +398,9 @@ fun SettingsScreen(
                            fontSize = 16.sp
                        )
                    }
+                   
+                   // Spacer adicional para asegurar scroll completo
+                   Spacer(modifier = Modifier.height(24.dp))
         }
         
         // Snackbar para feedback visual

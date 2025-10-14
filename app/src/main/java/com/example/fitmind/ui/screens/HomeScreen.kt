@@ -107,9 +107,16 @@ fun HomeScreen(
     val isGuestMode = currentUser == null
     val userName = currentUser?.displayName ?: currentUser?.email?.substringBefore("@") ?: "Usuario"
     
-    // Calcular progreso diario (opcional)
+    // Calcular progreso diario en tiempo real
     val completedHabits = habits.count { it.completado }
     val progressPercentage = if (habits.isNotEmpty()) completedHabits.toFloat() / habits.size else 0f
+    
+    // Estado de sesión
+    val sessionStatus = when (appModeStatus) {
+        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_CONNECTED -> "Conectado (modo online)"
+        com.example.fitmind.viewmodel.AppModeStatus.ONLINE_NO_CONNECTION -> "Sin conexión (modo local temporal)"
+        com.example.fitmind.viewmodel.AppModeStatus.OFFLINE_MODE -> "Modo sin conexión"
+    }
     
     // Sistema de feedback interactivo
     val interactionFeedback = rememberInteractionFeedback()
@@ -132,21 +139,15 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Mensaje de bienvenida temporal
-            if (!isGuestMode) {
-                WelcomeMessageWithProgress(
-                    userName = userName,
-                    isGuestMode = isGuestMode,
-                    progressPercentage = progressPercentage,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
-                )
-            } else {
-                WelcomeMessage(
-                    userName = userName,
-                    isGuestMode = isGuestMode,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
-                )
-            }
+            // Mensaje de bienvenida temporal con progreso en tiempo real
+            WelcomeMessageWithProgress(
+                userName = userName,
+                isGuestMode = isGuestMode,
+                progressPercentage = progressPercentage,
+                userRole = "user", // TODO: Obtener del AuthViewModel si está disponible
+                sessionStatus = sessionStatus,
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+            )
             
             // SessionBar moderna
             SessionBar(
