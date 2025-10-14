@@ -52,6 +52,12 @@
             android:name=".data.notifications.NotificationReceiver"
             android:enabled="true"
             android:exported="false" />
+
+        <!-- WorkManager Worker for Smart Notifications -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
     </application>
 
 </manifest>

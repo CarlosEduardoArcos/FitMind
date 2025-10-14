@@ -26,6 +26,8 @@ import android.util.Log
 import java.time.LocalTime
 import com.example.fitmind.ui.utils.InteractionFeedback
 import com.example.fitmind.ui.utils.rememberInteractionFeedback
+import com.example.fitmind.ui.components.SessionIndicator
+import com.example.fitmind.ui.components.GuestModeIndicator
 import com.example.fitmind.viewmodel.AuthViewModel
 import com.example.fitmind.viewmodel.HabitViewModel
 import com.example.fitmind.viewmodel.NotificationViewModel
@@ -65,6 +67,10 @@ fun SettingsScreen(
     val isConnected by settingsViewModel.isConnected.collectAsState()
     val connectionType by settingsViewModel.connectionType.collectAsState()
     val appModeStatus by settingsViewModel.appModeStatus.collectAsState()
+    
+    // Estados de notificaciones inteligentes
+    val smartNotificationsEnabled by notificationViewModel.smartNotificationsEnabled.collectAsState()
+    val notificationStatus by notificationViewModel.notificationStatus.collectAsState()
     
     // Estados locales para la UI moderna
     var showNotificationFields by remember { mutableStateOf(false) }
@@ -153,6 +159,19 @@ fun SettingsScreen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
+
+            // 👤 Indicador de Sesión Activa
+            val currentUser by authViewModel.currentUser.collectAsState()
+            if (currentUser != null) {
+                SessionIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    showAdminBadge = true
+                )
+            } else {
+                GuestModeIndicator(
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             // 🔔 Sección de Notificaciones Moderna
             NotificationSettingsCard(
@@ -304,6 +323,28 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            // 🧠 Sección de Notificaciones Inteligentes
+            SmartNotificationsCard(
+                smartNotificationsEnabled = smartNotificationsEnabled,
+                notificationStatus = notificationStatus,
+                onToggleSmartNotifications = { enabled ->
+                    try {
+                        interactionFeedback.onThemeToggle()
+                    } catch (e: Exception) {
+                        Log.e("FitMind", "Error al ejecutar vibración en toggle notificaciones inteligentes: ${e.message}")
+                    }
+                    
+                    if (enabled) {
+                        notificationViewModel.scheduleProgressNotifications(context)
+                    } else {
+                        notificationViewModel.cancelProgressNotifications(context)
+                    }
+                },
+                onUpdateStatus = {
+                    notificationViewModel.updateNotificationStatus(context)
+                }
+            )
 
                    // Sección de Información de la App
                    Card(
@@ -801,6 +842,145 @@ fun TimeSelector(
                 contentDescription = null,
                 modifier = Modifier.size(16.dp)
             )
+        }
+    }
+}
+
+/**
+ * Tarjeta moderna para configuración de notificaciones inteligentes
+ */
+@Composable
+fun SmartNotificationsCard(
+    smartNotificationsEnabled: Boolean,
+    notificationStatus: com.example.fitmind.notification.NotificationStatus,
+    onToggleSmartNotifications: (Boolean) -> Unit,
+    onUpdateStatus: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Notifications,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Notificaciones Inteligentes",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                Switch(
+                    checked = smartNotificationsEnabled,
+                    onCheckedChange = onToggleSmartNotifications,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = MaterialTheme.colorScheme.primary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Descripción
+            Text(
+                text = "Recibe recordatorios personalizados basados en tu progreso real de hábitos. Te motivaremos cuando no hayas completado un hábito en 3 días.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Estado actual
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = when (notificationStatus) {
+                        com.example.fitmind.notification.NotificationStatus.SCHEDULED -> 
+                            MaterialTheme.colorScheme.primaryContainer
+                        com.example.fitmind.notification.NotificationStatus.RUNNING -> 
+                            MaterialTheme.colorScheme.secondaryContainer
+                        com.example.fitmind.notification.NotificationStatus.COMPLETED -> 
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        com.example.fitmind.notification.NotificationStatus.FAILED -> 
+                            MaterialTheme.colorScheme.errorContainer
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    }
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = when (notificationStatus) {
+                            com.example.fitmind.notification.NotificationStatus.SCHEDULED -> Icons.Default.Notifications
+                            com.example.fitmind.notification.NotificationStatus.RUNNING -> Icons.Default.Refresh
+                            com.example.fitmind.notification.NotificationStatus.COMPLETED -> Icons.Default.CheckCircle
+                            com.example.fitmind.notification.NotificationStatus.FAILED -> Icons.Default.Warning
+                            else -> Icons.Default.Info
+                        },
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = when (notificationStatus) {
+                            com.example.fitmind.notification.NotificationStatus.SCHEDULED -> 
+                                "✅ Programadas - Verificación cada 24 horas"
+                            com.example.fitmind.notification.NotificationStatus.RUNNING -> 
+                                "🔄 Verificando progreso..."
+                            com.example.fitmind.notification.NotificationStatus.COMPLETED -> 
+                                "✅ Última verificación completada"
+                            com.example.fitmind.notification.NotificationStatus.FAILED -> 
+                                "❌ Error en última verificación"
+                            else -> "⏸️ No programadas"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Botón para actualizar estado
+            OutlinedButton(
+                onClick = onUpdateStatus,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Actualizar Estado")
+            }
         }
     }
 }
